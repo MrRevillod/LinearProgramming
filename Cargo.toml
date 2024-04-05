@@ -1,0 +1,8 @@
+[package]
+name = "graphic"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+regex = "1.10.4"
+conditional = "0.1.1"
