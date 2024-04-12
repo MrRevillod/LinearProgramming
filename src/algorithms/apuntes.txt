@@ -1,0 +1,57 @@
+
+ z => z = -1
+ z => coeff van en 0
+z => e = 0 ; a = 1
+
+a y e dependen del num of gtoeq
+
+orden = exc ; art
+
+cada fila bajo la z se multiplica por -1 y se suma a la fila de la z
+
+luego pivotear en func del más negativo de la fila Z
+para elegir fila el mismo proceso, dividir en los resultados 
+y elegir el positivo más bajo
+
+si el res de z decrece está mal, siempre tenderá a 0
+
+finaliza cuando en la fila de 0 no hay negativos, exceptuando la -1
+
+** Las variables basicas tienen 1 en sus intersección y 0 en la objetivo al final
+
+apunte: 
+vb tienen valor
+nb no tienen valor
+
+---------- * ---------- ---------- * ---------- ---------- * ---------- 
+
+2 fases => Preparar ecuaciones:
+
+<= : + holgura_n
+>= : - exceso_n + artificial_n
+=  : + artificial_n
+
+---------- * ---------- ---------- * ---------- ---------- * ---------- 
+
+Test I - Input III - Simplex +
+z = 5x1 + 8x2
+2x1 + 1x2 = 12
+1x1 + 1x2 >= 8
+0x1 + 1x2 <= 8
+
+---------- * ---------- ---------- * ---------- ---------- * ---------- 
+
+Añadir variables y normalizar las restricciones
+
+2x_1 + 1x_2 + 1a_1 + 0e_1 + 0a_2 + 0h_1 = 12
+1x_1 + 1x_2 + 0a_1 - 1e_1 + 1a_2 + 0h_1 = 8
+0x_1 + 1x_2 + 0a_1 + 0e_1 + 0a_2 + 1h_1 = 8
+
+---------- * ---------- ---------- * ---------- ---------- * ---------- 
+
+VB    Z  x_1  x_2  a_1  e_1  a_2  h_1    LD
+Z     1  -5   
+a_1   0   2    1    1    0   0    0 = 12
+a_2   0   1    1    0   -1   1    0 = 8
+a_3   0   0    1    0    0   0    1 = 8
+

@@ -1,4 +1,3 @@
-
 pub static INPUT_I: &str = "
 Graphic
 +
@@ -19,4 +18,13 @@ z = 2x1 + 2x2
 1x1 + 3x2 <= 80
 1x1 + 0x2 <= 45
 0x1 + 1x2 <= 100
+";
+
+pub static INPUT_III: &str = "
+Simplex
++
+z = 5x1 + 8x2
+2x1 + 1x2 = 12
+1x1 + 1x2 >= 8
+0x1 + 1x2 <= 8
 ";

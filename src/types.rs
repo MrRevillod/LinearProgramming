@@ -10,7 +10,7 @@ pub type Intersections = Vec<Point>;
 #[derive(Debug, Clone)]
 pub struct Point {
     pub x: f64,
-    pub y: f64
+    pub y: f64,
 }
 
 impl Point {
@@ -19,20 +19,20 @@ impl Point {
     }
 }
 
-#[derive(Debug)] 
+#[derive(Debug)]
 pub enum Operation {
     Lt,
     Gt,
-    Eq
+    Eq,
 }
 
-#[derive(Debug)] 
+#[derive(Debug)]
 pub enum ProblemKind {
     Maximize,
-    Minimize
+    Minimize,
 }
 
-#[derive(Debug)] 
+#[derive(Debug)]
 pub struct GraphicMethod {
     pub kind: ProblemKind,
     pub a: A,
@@ -41,7 +41,7 @@ pub struct GraphicMethod {
     pub operations: Operations,
     pub intersections: Intersections,
     pub optimal_point: Point,
-    pub utility: f64
+    pub utility: f64,
 }
 
 #[derive(Debug)]
@@ -50,7 +50,8 @@ pub struct SimplexMethod {
     pub a: A,
     pub b: B,
     pub c: C,
+    pub operations: Operations,
     pub increased: Vec<Vec<f64>>,
     pub table: Vec<Vec<String>>,
-    pub pivot: (usize, usize)
+    pub pivot: (usize, usize),
 }

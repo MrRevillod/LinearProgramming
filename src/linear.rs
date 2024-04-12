@@ -1,20 +1,28 @@
-
 use crate::types::*;
 use conditional::conditional;
 
 pub fn gen_identity(len: usize) -> A {
-
     let mut identity = A::new();
 
     for i in 0..len {
-
         let mut row = Vec::new();
 
         for j in 0..len {
-            row.push(conditional!(i == j ? 1.0 : 0.0));
+            row.push(conditional!(i == j ? 1.0f64 : 0.0));
         }
 
         identity.push(row);
+    }
+
+    identity
+}
+
+pub fn gen_fases_identity(len: usize) -> Vec<Vec<f64>> {
+    let mut identity = vec![vec![0f64; len * 2]; len];
+
+    for i in 0..len {
+        identity[i][i * 2] = -1f64;
+        identity[i][i * 2 + 1] = 1f64;
     }
 
     identity
@@ -25,11 +33,11 @@ pub fn determinant(a: &A) -> f64 {
 }
 
 pub fn cramer(a: &A, b: &B) -> Result<Point, &'static str> {
-
+    
     let det_a = determinant(a);
 
     if det_a == 0.0 as f64 || det_a.abs() <= f64::EPSILON {
-        return Err("Determinant error")
+        return Err("Determinant error");
     }
 
     let x = {
@@ -54,5 +62,5 @@ pub fn cramer(a: &A, b: &B) -> Result<Point, &'static str> {
         determinant(&temp_a) / det_a
     };
 
-    Ok( Point { x, y } )
+    Ok(Point { x, y })
 }
