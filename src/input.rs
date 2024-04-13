@@ -31,7 +31,7 @@ z = 5x1 + 8x2
 pub static INPUT_IV: &str = "
 Graphic
 +
-z = 2x + 2y 
+z = 3x + 5y 
 1x + 0y <= 4
 0x + 2y <= 12
 3x + 2y <= 18

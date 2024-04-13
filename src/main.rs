@@ -7,5 +7,5 @@ mod types;
 use input::*;
 
 fn main() {
-    parser::initialize(INPUT_IV);
+    parser::initialize(INPUT_I);
 }
