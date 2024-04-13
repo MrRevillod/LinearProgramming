@@ -28,6 +28,9 @@ impl SimplexMethod {
         // <= : + holgura_n
         // >= : - exceso_n + artificial_n
         // =  : + artificial_n
+        //
+
+        let mut two_fases = false;
 
         for (i, value) in self.operations.iter().enumerate() {
 
@@ -37,13 +40,25 @@ impl SimplexMethod {
                     self.a[j].push(conditional!(i == j ? value: 0f64));
                 }
             };
+
+            let mut add_z_var = |value: f64| {
+                self.c.push(value);
+            };
             
             match value {
+                
                 Operation::Gt => {
-                    add_variables(-1f64); add_variables(1f64);
+                    add_variables(-1f64); 
+                    add_variables(1f64);
+
+                    add_z_var(0f64);
+                    add_z_var(-1f64);
+                    
+                    two_fases = true;
                 },
                 Operation::Lt | Operation::Eq => {
-                    add_variables(1f64)
+                    add_variables(1f64);
+                    add_z_var(0f64);
                 }
             }
         }
@@ -61,9 +76,15 @@ impl SimplexMethod {
             },
 
             ProblemKind::Maximize => {
-                self.c.iter_mut().for_each(|x| *x *= -1.0);
                 self.c.insert(0, 1f64);
             }
+        }
+
+        self.a.insert(0, self.c.clone());
+
+        if two_fases {
+            
+            let num_vars = self.a[0].len();
         }
 
         for row in self.a.iter() {

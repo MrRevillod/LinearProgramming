@@ -1,6 +1,8 @@
 
 pub mod utils;
 
+use core::f64;
+
 use regex::Regex;
 use self::utils::*;
 use crate::types::*;
@@ -27,6 +29,7 @@ pub fn parse_graphic(text: &str) -> GraphicMethod {
     let mut z = Z::new();
 
     let mut operations = Operations::new();
+    let mut inequalities = Vec::new();
 
     let obj_rgx = Regex::new(r"z = (-?\d+)x \+ (-?\d+)y").unwrap();
     let ec_rgx = Regex::new(r"(-?\d+)x \+ (-?\d+)y (<=|>=|=) (-?\d+)").unwrap();
@@ -47,6 +50,8 @@ pub fn parse_graphic(text: &str) -> GraphicMethod {
                 caps[2].parse::<f64>().unwrap(),
             ];
 
+            let res = caps[4].parse::<f64>().unwrap();
+
             let kind = match &caps[3] {
                 "<=" => Operation::Lt,
                 ">=" => Operation::Gt,
@@ -54,13 +59,15 @@ pub fn parse_graphic(text: &str) -> GraphicMethod {
                 _ => panic!("Inequalities operatos must be [ <= or >= or = ]"),
             };
 
+            inequalities.push(vec![res, coeff[0].clone(), coeff[1].clone()]);
+
             a.push(coeff);
-            b.push(caps[4].parse::<f64>().unwrap());
+            b.push(res.clone());
             operations.push(kind);
         }
     }
 
-    GraphicMethod::new((kind, a, b, z, operations))
+    GraphicMethod::new((kind, a, b, z, operations, inequalities))
 }
 
 pub fn parse_simplex(text: &str) -> SimplexMethod {

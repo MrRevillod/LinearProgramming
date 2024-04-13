@@ -4,10 +4,10 @@ Graphic
 z = 2x + 2y
 2x + 1y <= 100
 1x + 3y <= 80
-1x + 0y >= 0
 1x + 0y <= 45
-0x + 1y >= 0
 0x + 1y <= 100
+1x + 0y >= 0
+0x + 1y >= 0
 ";
 
 pub static INPUT_II: &str = "
@@ -24,7 +24,17 @@ pub static INPUT_III: &str = "
 Simplex
 +
 z = 5x1 + 8x2
-2x1 + 1x2 = 12
 1x1 + 1x2 >= 8
 0x1 + 1x2 <= 8
+";
+
+pub static INPUT_IV: &str = "
+Graphic
++
+z = 2x + 2y 
+1x + 0y <= 4
+0x + 2y <= 12
+3x + 2y <= 18
+0x + 1y >= 0
+1x + 0y >= 0
 ";

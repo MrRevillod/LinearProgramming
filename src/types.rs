@@ -1,3 +1,5 @@
+use core::f64;
+
 
 pub type A = Vec<Vec<f64>>;
 pub type B = Vec<f64>;
@@ -40,8 +42,10 @@ pub struct GraphicMethod {
     pub z: Z,
     pub operations: Operations,
     pub intersections: Intersections,
-    pub optimal_point: Point,
+    pub python_intersections: Vec<Vec<f64>>,
+    pub optimal_point: [f64; 2],
     pub utility: f64,
+    pub inequalities: Vec<Vec<f64>>,
 }
 
 #[derive(Debug)]
