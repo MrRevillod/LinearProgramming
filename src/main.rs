@@ -1,3 +1,4 @@
+
 mod algorithms;
 mod input;
 mod linear;
@@ -7,5 +8,5 @@ mod types;
 use input::*;
 
 fn main() {
-    parser::initialize(INPUT_I);
+    parser::initialize(INPUT_V);
 }

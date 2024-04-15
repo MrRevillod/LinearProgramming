@@ -1,32 +1,5 @@
+
 use crate::types::*;
-use conditional::conditional;
-
-pub fn gen_identity(len: usize) -> A {
-    let mut identity = A::new();
-
-    for i in 0..len {
-        let mut row = Vec::new();
-
-        for j in 0..len {
-            row.push(conditional!(i == j ? 1.0f64 : 0.0));
-        }
-
-        identity.push(row);
-    }
-
-    identity
-}
-
-pub fn gen_fases_identity(len: usize) -> Vec<Vec<f64>> {
-    let mut identity = vec![vec![0f64; len * 2]; len];
-
-    for i in 0..len {
-        identity[i][i * 2] = -1f64;
-        identity[i][i * 2 + 1] = 1f64;
-    }
-
-    identity
-}
 
 pub fn determinant(a: &A) -> f64 {
     (a[0][0] * a[1][1] - (a[1][0] * a[0][1])) as f64
@@ -64,3 +37,4 @@ pub fn cramer(a: &A, b: &B) -> Result<Point, &'static str> {
 
     Ok(Point { x, y })
 }
+

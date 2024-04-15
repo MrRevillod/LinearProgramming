@@ -1,7 +1,6 @@
 
 use crate::types::*;
 use crate::linear::*;
-
 use inline_python::python;
 
 impl GraphicMethod {

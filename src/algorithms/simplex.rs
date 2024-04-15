@@ -1,12 +1,13 @@
 
 use conditional::conditional;
-
-use crate::linear::{gen_fases_identity, gen_identity};
 use crate::types::*;
 
 impl SimplexMethod {
     
     pub fn new(data: (ProblemKind, A, B, C, Operations)) -> Self {
+    
+        let n_vars = &data.1[0].len();
+
         SimplexMethod {
             kind: data.0,
             a: data.1,
@@ -16,21 +17,21 @@ impl SimplexMethod {
             increased: Vec::new(),
             table: Vec::new(),
             pivot: (0, 0),
+            two_fases: false,
+            n_vars: *n_vars
         }
     }
 
+    // Complete the matrix with h ; a ; e
+
+    // 2 fases => Preparar ecuaciones:
+    //
+    // <= : + holgura_n
+    // >= : - exceso_n + artificial_n
+
     fn to_increased_form(&mut self) {
 
-        // Complete the matrix with h ; a ; e
-
-        // 2 fases => Preparar ecuaciones:
-        //
-        // <= : + holgura_n
-        // >= : - exceso_n + artificial_n
-        // =  : + artificial_n
-        //
-
-        let mut two_fases = false;
+        self.b.insert(0, 0f64);
 
         for (i, value) in self.operations.iter().enumerate() {
 
@@ -51,21 +52,18 @@ impl SimplexMethod {
                     add_variables(-1f64); 
                     add_variables(1f64);
 
+                    add_z_var(1f64);
                     add_z_var(0f64);
-                    add_z_var(-1f64);
                     
-                    two_fases = true;
+                    self.two_fases = true;
                 },
+
                 Operation::Lt | Operation::Eq => {
                     add_variables(1f64);
                     add_z_var(0f64);
                 }
             }
         }
-
-        // End of completion
-        
-        // Begin populate Z Column and row
         
         self.a.iter_mut().for_each(|x| x.insert(0, 0f64));
 
@@ -80,23 +78,31 @@ impl SimplexMethod {
             }
         }
 
-        self.a.insert(0, self.c.clone());
+        self.increased.insert(0, self.c.clone());
 
-        if two_fases {
+        match self.two_fases {
             
-            let num_vars = self.a[0].len();
+            true => {
+                for i in 1..self.n_vars + 1 {
+                    self.increased[0][i] = 0f64;
+                }
+            },
+
+            false => {
+                
+                for i in 1..self.n_vars + 1 {
+                    self.increased[0][i] *= -1f64;
+                }
+            }
         }
 
         for row in self.a.iter() {
-            
-            for item in row {
-                print!("{:<8}", item);
-            }
-
-            println!();
+            self.increased.push(row.clone());
         }
 
-        std::process::exit(1);
+        for i in 0..self.increased.len() {
+            self.increased[i].push(self.b[i].clone());
+        }
     }
 
     fn get_pivot_indexes(&self) -> (usize, usize) {

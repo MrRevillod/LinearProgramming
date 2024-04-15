@@ -1,5 +1,3 @@
-use core::f64;
-
 
 pub type A = Vec<Vec<f64>>;
 pub type B = Vec<f64>;
@@ -48,6 +46,7 @@ pub struct GraphicMethod {
     pub inequalities: Vec<Vec<f64>>,
 }
 
+#[allow(warnings)]
 #[derive(Debug)]
 pub struct SimplexMethod {
     pub kind: ProblemKind,
@@ -58,4 +57,6 @@ pub struct SimplexMethod {
     pub increased: Vec<Vec<f64>>,
     pub table: Vec<Vec<String>>,
     pub pivot: (usize, usize),
+    pub two_fases: bool,
+    pub n_vars: usize
 }
