@@ -13,7 +13,7 @@ pub fn initialize(text: &str) {
 
     if let Some(matched) = alg_regex.find(text) {
         match matched.as_str() {
-            "Graphic" => parse_graphic(text).solve(),
+            // "Graphic" => parse_graphic(text).solve(),
             "Simplex" => parse_simplex(text).solve(),
             _ => panic!("Invalid algorithm"),
         }
@@ -22,53 +22,53 @@ pub fn initialize(text: &str) {
     }
 }
 
-pub fn parse_graphic(text: &str) -> GraphicMethod {
-    
-    let mut a = A::new();
-    let mut b = B::new();
-    let mut z = Z::new();
-
-    let mut operations = Operations::new();
-    let mut inequalities = Vec::new();
-
-    let obj_rgx = Regex::new(r"z = (-?\d+)x \+ (-?\d+)y").unwrap();
-    let ec_rgx = Regex::new(r"(-?\d+)x \+ (-?\d+)y (<=|>=|=) (-?\d+)").unwrap();
-
-    let kind = parse_problem_kind(text);
-
-    for line in text.lines() {
-        
-        if let Some(caps) = obj_rgx.captures(line) {
-            z.push(caps[1].parse::<f64>().unwrap());
-            z.push(caps[2].parse::<f64>().unwrap());
-        }
-
-        if let Some(caps) = ec_rgx.captures(line) {
-            
-            let coeff = vec![
-                caps[1].parse::<f64>().unwrap(),
-                caps[2].parse::<f64>().unwrap(),
-            ];
-
-            let res = caps[4].parse::<f64>().unwrap();
-
-            let kind = match &caps[3] {
-                "<=" => Operation::Lt,
-                ">=" => Operation::Gt,
-                "=" => Operation::Eq,
-                _ => panic!("Inequalities operatos must be [ <= or >= or = ]"),
-            };
-
-            inequalities.push(vec![res, coeff[0].clone(), coeff[1].clone()]);
-
-            a.push(coeff);
-            b.push(res.clone());
-            operations.push(kind);
-        }
-    }
-
-    GraphicMethod::new((kind, a, b, z, operations, inequalities))
-}
+// pub fn parse_graphic(text: &str) -> GraphicMethod {
+//     
+//     let mut a = A::new();
+//     let mut b = B::new();
+//     let mut z = Z::new();
+//
+//     let mut operations = Operations::new();
+//     let mut inequalities = Vec::new();
+//
+//     let obj_rgx = Regex::new(r"z = (-?\d+)x \+ (-?\d+)y").unwrap();
+//     let ec_rgx = Regex::new(r"(-?\d+)x \+ (-?\d+)y (<=|>=|=) (-?\d+)").unwrap();
+//
+//     let kind = parse_problem_kind(text);
+//
+//     for line in text.lines() {
+//         
+//         if let Some(caps) = obj_rgx.captures(line) {
+//             z.push(caps[1].parse::<f64>().unwrap());
+//             z.push(caps[2].parse::<f64>().unwrap());
+//         }
+//
+//         if let Some(caps) = ec_rgx.captures(line) {
+//             
+//             let coeff = vec![
+//                 caps[1].parse::<f64>().unwrap(),
+//                 caps[2].parse::<f64>().unwrap(),
+//             ];
+//
+//             let res = caps[4].parse::<f64>().unwrap();
+//
+//             let kind = match &caps[3] {
+//                 "<=" => Operation::Lt,
+//                 ">=" => Operation::Gt,
+//                 "=" => Operation::Eq,
+//                 _ => panic!("Inequalities operatos must be [ <= or >= or = ]"),
+//             };
+//
+//             inequalities.push(vec![res, coeff[0].clone(), coeff[1].clone()]);
+//
+//             a.push(coeff);
+//             b.push(res.clone());
+//             operations.push(kind);
+//         }
+//     }
+//
+//     GraphicMethod::new((kind, a, b, z, operations, inequalities))
+// }
 
 pub fn parse_simplex(text: &str) -> SimplexMethod {
 
@@ -105,6 +105,13 @@ pub fn parse_simplex(text: &str) -> SimplexMethod {
             op.push(kind);
             b.push(cap[2].parse::<f64>().unwrap());
         }
+    }
+
+    b.insert(0, 0f64);
+
+    match kind {
+        ProblemKind::Maximize => c.insert(0, 1f64),
+        ProblemKind::Minimize => c.insert(0, -1f64),
     }
 
     SimplexMethod::new((kind, a, b, c, op))

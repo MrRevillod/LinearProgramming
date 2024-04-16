@@ -19,7 +19,7 @@ impl Point {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operation {
     Lt,
     Gt,

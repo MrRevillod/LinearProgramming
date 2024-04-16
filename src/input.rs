@@ -26,7 +26,7 @@ z = 2x1 + 2x2
 #[allow(warnings)]
 pub static INPUT_III: &str = "
 Simplex
-+
+-
 z = 5x1 + 8x2
 1x1 + 1x2 >= 8
 0x1 + 1x2 <= 8
