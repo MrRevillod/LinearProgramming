@@ -146,10 +146,6 @@ impl SimplexMethod {
         self.print_table();
     }
 
-    pub fn trunc(&self, num: f64) -> f64 {
-        (num * 1000.0).trunc() / 1000.0
-    }
-
     pub fn update_table(&mut self) {
 
         if self.pivot != (0, 0) {

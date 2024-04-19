@@ -1,8 +1,7 @@
 
 #![allow(dead_code)]
 
-use core::{f64, panic};
-use std::{collections::HashMap, usize};
+use std::collections::HashMap;
 
 use crate::types::*;
 
@@ -95,23 +94,14 @@ impl SimplexMethod {
 
     fn should_finish(&self) -> bool {
 
-        for i in 1..self.increased[0].len() {
+        for i in 1..self.increased[0].len() - 1 {
             if self.increased[0][i] < 0f64 { return false } else { continue }
         }
 
         true
     }
 
-    fn should_finish_second_fase(&self) -> bool {
-
-        for i in 1..self.increased[0].len() {
-            if self.increased[0][i] > 0f64 { return false } else { continue }
-        }
-
-        true
-    }
-
-    fn pivoting(&mut self, fase: u8) {
+    fn pivoting(&mut self) {
 
         while !self.should_finish() {
 
@@ -144,6 +134,8 @@ impl SimplexMethod {
             self.pivot = p_index;
             self.increased = increased;
 
+            println!("{:?}", self.increased[0]);
+
             self.update_table();
             self.print_table();
         }
@@ -153,6 +145,7 @@ impl SimplexMethod {
 
         println!("Iniciando primera fase ...");
 
+        // Restar las filas a la fila de la función objetivo
         for i in 1..self.increased.len() {
 
             for j in 0..self.increased[0].len() {
@@ -160,7 +153,7 @@ impl SimplexMethod {
             }
         }
 
-        self.pivoting(1);
+        self.pivoting();
         
         println!("Iniciando segunda fase ...");
 
@@ -185,8 +178,10 @@ impl SimplexMethod {
         }
 
         for i in 1..self.n_vars + 1 {
-            new_increased[0][i] = self.c[i].clone();
+            new_increased[0][i] = -self.c[i].clone();
         }
+
+        println!("{:?}", new_increased[0]);
 
         self.pivot = (0, 0);
         self.increased = new_increased;
@@ -194,8 +189,6 @@ impl SimplexMethod {
         self.init_sec_fase_table();
         self.update_table();
         self.print_table();
-
-        self.pivoting(2);
     }
 
     pub fn solve(&mut self) {
