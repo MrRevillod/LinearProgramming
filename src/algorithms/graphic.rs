@@ -1,11 +1,13 @@
 
+#![allow(dead_code)]
+
 use crate::types::*;
 use crate::linear::*;
-use inline_python::python;
+// use inline_python::python;
 
 impl GraphicMethod {
 
-    pub fn new(data: (ProblemKind, A, B, Z, Operations, Vec<Vec<f64>>)) -> Self {
+    pub fn new(data: (ProblemKind, A, B, Z, Operations)) -> Self {
 
         GraphicMethod {
             kind: data.0,
@@ -17,7 +19,7 @@ impl GraphicMethod {
             python_intersections: Vec::new(),
             optimal_point: [0f64, 0f64],
             utility: 0.0,
-            inequalities: data.5,
+            inequalities: Vec::new(),
         }
     }
 
@@ -66,9 +68,7 @@ impl GraphicMethod {
                 }
             }
 
-            intesections.push(
-                Point::new(x.clone(), y.clone())
-            )
+            intesections.push(Point::new(x.clone(), y.clone()))
         }
 
         self.intersections = intesections;
@@ -93,6 +93,12 @@ impl GraphicMethod {
     }
 
     pub fn prepare_for_graphic(&mut self) {
+
+        for i in 0..self.a.len() {
+            self.inequalities.push(
+                vec![self.b[i].clone(), self.a[i][0].clone(), self.a[i][1].clone()]
+            )
+        }
         
         let mut points = Vec::new();
         let mut intersections = self.intersections.clone();
@@ -120,6 +126,7 @@ impl GraphicMethod {
         self.inequalities.pop();
     }
 
+    #[allow(warnings)]
     pub fn graphic(&self) {
 
         let intersections = self.python_intersections.clone();
@@ -127,77 +134,77 @@ impl GraphicMethod {
         let optimal_point = self.optimal_point.clone();
         let z = self.z.clone();
 
-        python! {
-
-            import matplotlib.pyplot as plt
-            from matplotlib.patches import Polygon
-            import numpy as np
-            import matplotlib.animation as animation
-
-            def pyformat(x, i):
-                return x+str(i)
-
-            intersections = 'intersections
-            inequalities = 'inequalities
-            optimal_point = 'optimal_point
-            z = 'z
-
-            polygon = Polygon(intersections, closed=True, fill=True, color="red", alpha=0.3)
-
-            domain_animation = np.arange(round(-optimal_point[0]*30), round(optimal_point[1]*30), 0.1)
-
-            operations = {}
-
-            for i, p in enumerate(inequalities):
-                if p[2] == 0:
-                    operations[pyformat("x",i)] = p[0]/ p[1]
-                else:
-                    operations[pyformat("f",i)] = lambda x, coefs=p: (coefs[0] - coefs[1] * x) / coefs[2]
-
-            fig, ax = plt.subplots()
-            ax.plot([round(-optimal_point[0]*30), round(optimal_point[0]*30)], [0,0], linewidth=2, color="black", alpha=1.0)
-            ax.plot([0,0], [round(-optimal_point[1]*30), round(optimal_point[1]*30)], linewidth=2, color="black", alpha=1.0)
-
-
-            for key, func in operations.items():
-                if type(func) == float:
-                    x_values = np.full(len(domain_animation), func)
-                    // y_values = np.arange(0.0, 10.0, 1.0)
-                    ax.plot(x_values, domain_animation, alpha=0.75, linestyle="--")
-                else: 
-                    x_values = domain_animation
-                    y_values = [func(x) for x in domain_animation]
-                    ax.plot(x_values, y_values, alpha=0.75, linestyle="--")
-
-            line, = ax.plot([])
-
-            def animate(i):
-                // A*x + B*y = Z = 0 --> y = (-A * x) / B + i *
-                y = (-z[0]*domain_animation) / z[1] + i
-                line.set_data(domain_animation, y)
-                return line,
-
-            ani = animation.FuncAnimation(
-                fig, func=animate, frames=np.arange(round(-optimal_point[0]*0.1), 
-                round(optimal_point[0]*3), 0.1), interval=1)
-
-            ax.add_patch(polygon)
-
-            ax.plot(optimal_point[0], optimal_point[1], marker="o", markersize=13, 
-                    markeredgecolor="red", markerfacecolor="yellow", 
-                    label=str(optimal_point[0])+", "+str(optimal_point[1]))
-
-            ax.set_xlim(round(-optimal_point[0]*2), round(optimal_point[0]*4))
-            ax.set_ylim(round(-optimal_point[1]*2), round(optimal_point[1]*4))
-            ax.grid()
-            ax.legend()
-
-            plt.show()
-        }
+        // python! {
+        //
+        //     import matplotlib.pyplot as plt
+        //     from matplotlib.patches import Polygon
+        //     import numpy as np
+        //     import matplotlib.animation as animation
+        //
+        //     def pyformat(x, i):
+        //         return x+str(i)
+        //
+        //     intersections = 'intersections
+        //     inequalities = 'inequalities
+        //     optimal_point = 'optimal_point
+        //     z = 'z
+        //
+        //     polygon = Polygon(intersections, closed=True, fill=True, color="red", alpha=0.3)
+        //
+        //     domain_animation = np.arange(round(-optimal_point[0]*30), round(optimal_point[1]*30), 0.1)
+        //
+        //     operations = {}
+        //
+        //     for i, p in enumerate(inequalities):
+        //         if p[2] == 0:
+        //             operations[pyformat("x",i)] = p[0]/ p[1]
+        //         else:
+        //             operations[pyformat("f",i)] = lambda x, coefs=p: (coefs[0] - coefs[1] * x) / coefs[2]
+        //
+        //     fig, ax = plt.subplots()
+        //     ax.plot([round(-optimal_point[0]*30), round(optimal_point[0]*30)], [0,0], linewidth=2, color="black", alpha=1.0)
+        //     ax.plot([0,0], [round(-optimal_point[1]*30), round(optimal_point[1]*30)], linewidth=2, color="black", alpha=1.0)
+        //
+        //
+        //     for key, func in operations.items():
+        //         if type(func) == float:
+        //             x_values = np.full(len(domain_animation), func)
+        //             // y_values = np.arange(0.0, 10.0, 1.0)
+        //             ax.plot(x_values, domain_animation, alpha=0.75, linestyle="--")
+        //         else: 
+        //             x_values = domain_animation
+        //             y_values = [func(x) for x in domain_animation]
+        //             ax.plot(x_values, y_values, alpha=0.75, linestyle="--")
+        //
+        //     line, = ax.plot([])
+        //
+        //     def animate(i):
+        //         // A*x + B*y = Z = 0 --> y = (-A * x) / B + i *
+        //         y = (-z[0]*domain_animation) / z[1] + i
+        //         line.set_data(domain_animation, y)
+        //         return line,
+        //
+        //     ani = animation.FuncAnimation(
+        //         fig, func=animate, frames=np.arange(round(-optimal_point[0]*0.1), 
+        //         round(optimal_point[0]*3), 0.1), interval=1)
+        //
+        //     ax.add_patch(polygon)
+        //
+        //     ax.plot(optimal_point[0], optimal_point[1], marker="o", markersize=13, 
+        //             markeredgecolor="red", markerfacecolor="yellow", 
+        //             label=str(optimal_point[0])+", "+str(optimal_point[1]))
+        //
+        //     ax.set_xlim(round(-optimal_point[0]*2), round(optimal_point[0]*4))
+        //     ax.set_ylim(round(-optimal_point[1]*2), round(optimal_point[1]*4))
+        //     ax.grid()
+        //     ax.legend()
+        //
+        //     plt.show()
+        // }
     }
 
     pub fn solve(&mut self) {
-        
+
         self.get_all_intersections();
         self.get_feasible_intersections();
         self.optimize();

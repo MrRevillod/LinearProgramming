@@ -1,4 +1,9 @@
 
+#![allow(dead_code)]
+
+use core::{f64, panic};
+use std::{collections::HashMap, usize};
+
 use crate::types::*;
 
 impl SimplexMethod {
@@ -6,6 +11,13 @@ impl SimplexMethod {
     pub fn new(data: (ProblemKind, A, B, C, Operations)) -> Self {
 
         let n_vars = &data.1[0].len();
+
+        let vars = vec!['a', 'e', 'h'];
+        let mut var_positions: HashMap<char, Vec<usize>> = HashMap::new();
+
+        for i in 0..vars.len() {
+            var_positions.insert(vars[i], vec![]);
+        }
 
         SimplexMethod {
             kind: data.0,
@@ -17,7 +29,8 @@ impl SimplexMethod {
             table: Vec::new(),
             pivot: (0, 0),
             two_fases: false,
-            n_vars: *n_vars
+            n_vars: *n_vars,
+            var_positions,
         }
     }
 
@@ -81,48 +94,118 @@ impl SimplexMethod {
     }
 
     fn should_finish(&self) -> bool {
-        
-        for &value in self.increased[0].iter() {
-            if value < 0f64 { return false } else { continue }
+
+        for i in 1..self.increased[0].len() {
+            if self.increased[0][i] < 0f64 { return false } else { continue }
         }
 
         true
+    }
+
+    fn should_finish_second_fase(&self) -> bool {
+
+        for i in 1..self.increased[0].len() {
+            if self.increased[0][i] > 0f64 { return false } else { continue }
+        }
+
+        true
+    }
+
+    fn pivoting(&mut self, fase: u8) {
+
+        while !self.should_finish() {
+
+            let p_index = self.get_pivot_indexes();
+            let mut increased = self.increased.clone();
+
+            let pivot = increased[p_index.0][p_index.1];
+
+            // Dividir fila pivote por pivote para hacer pivote = 1
+            for value in increased[p_index.0].iter_mut() {
+                *value /= pivot;
+            }
+
+            for i in 0..increased.len() {
+                
+                if i == p_index.0 { continue }
+
+                for j in 0..increased[i].len() {
+
+                    increased[i][j] = self.increased[i][j] - 
+                        increased[p_index.0][j] * self.increased[i][p_index.1]
+                    ;
+
+                    if increased[i][j].abs() <= f64::EPSILON {
+                        increased[i][j] = 0f64;
+                    }
+                }
+            }
+
+            self.pivot = p_index;
+            self.increased = increased;
+
+            self.update_table();
+            self.print_table();
+        }
+    }
+
+    pub fn two_fases(&mut self) {
+
+        println!("Iniciando primera fase ...");
+
+        for i in 1..self.increased.len() {
+
+            for j in 0..self.increased[0].len() {
+                self.increased[0][j] += self.increased[i][j] * -1f64
+            }
+        }
+
+        self.pivoting(1);
+        
+        println!("Iniciando segunda fase ...");
+
+        // Crear matríz sin variables artificiales
+        // self.var_positions => diccionario con las posiciones de las variables
+
+        let mut new_increased = Vec::new();
+
+        for i in 0..self.increased.len() {
+
+            let mut row = Vec::new();
+
+            for j in 0..self.increased[0].len() {
+
+                if !self.var_positions.get(&'a').unwrap().contains(&j) {
+
+                    row.push(self.increased[i][j])
+                }
+            }
+
+            new_increased.push(row);
+        }
+
+        for i in 1..self.n_vars + 1 {
+            new_increased[0][i] = self.c[i].clone();
+        }
+
+        self.pivot = (0, 0);
+        self.increased = new_increased;
+
+        self.init_sec_fase_table();
+        self.update_table();
+        self.print_table();
+
+        self.pivoting(2);
     }
 
     pub fn solve(&mut self) {
         
         self.to_increased_form();
 
-//         self.init_table();
-//         self.print_table();
-//
-//         while !self.should_finish() {
-//             
-//             let p_index = self.get_pivot_indexes();
-//             let mut increased = self.increased.clone();
-//
-//             let pivot = increased[p_index.0][p_index.1];
-//
-//             for value in increased[p_index.0].iter_mut() {
-//                 *value /= pivot;
-//             }
-//
-//             for i in 0..increased.len() {
-//                 
-//                 if i == p_index.0 { continue }
-//
-//                 for j in 0..increased[i].len() {
-// increased[i][j] = self.increased[i][j] - increased[p_index.0][j] * self.increased[i][p_index.1];
-//                 }
-//             }
-//
-//             self.pivot = p_index;
-//             self.increased = increased;
-//
-//             self.update_table();
-//             self.print_table();
-//         }
+        if self.two_fases {
+            self.two_fases();
+        }
+
+        std::process::exit(1);
     }
-
-
 }

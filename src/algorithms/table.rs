@@ -1,6 +1,10 @@
 
-use crate::types::*;
+#![allow(dead_code)]
+
 use conditional::conditional;
+
+use crate::types::*;
+use crate::parser::parse_to_frac; 
 
 impl SimplexMethod {
 
@@ -9,7 +13,7 @@ impl SimplexMethod {
         let mut header = vec![String::from("VB"), String::from("Z")];
 
         for i in 0..self.n_vars {
-            header.push(format!("x{}", i));
+            header.push(format!("x{}", i + 1));
         }
 
         self.table.push(header);
@@ -22,14 +26,42 @@ impl SimplexMethod {
         self.table[1].push(String::from("Z"));
     }
 
+    pub fn init_sec_fase_table(&mut self) {
+
+        let mut table = vec![
+            vec![String::from("VB"), String::from("Z")],
+            vec![String::from("Z")],
+        ];
+
+        for i in 0..self.n_vars {
+            table[0].push(format!("x{}", i + 1));
+        }
+
+        for i in 1..self.var_positions.get(&'e').unwrap().len() + 1 {
+            table[0].push(format!("e{}", i));
+        }
+        
+        for i in 1..self.var_positions.get(&'h').unwrap().len() + 1 {
+            table[0].push(format!("h{}", i));
+        }
+
+        for i in 2..self.table.len() {
+            table.push(vec![self.table[i][0].clone()])
+        }
+
+        table[0].push(String::from("LD"));
+
+        self.table = table;
+    }
+
     pub fn add_variable(&mut self, c: char, count: &mut usize, a: &mut A, iter: &usize) {
 
         // Update table variables
         // values = ( a var value, z var value )
         
-        let values: (f64, f64) = match c { 
+        let values: (f64, f64) = match &c { 
             'h' => (1.0, 0.0),
-            'a' => (1.0, -1.0),
+            'a' => (1.0, 1.0),
             'e' => (-1.0, 0.0),
             _   => panic!("Invalid var type")
         };
@@ -38,6 +70,9 @@ impl SimplexMethod {
 
         self.table[0].pop();
         self.table[0].push(var_name.clone());
+
+        self.var_positions.get_mut(&c).unwrap().push(self.table[0].len() - 2);
+
         self.table[0].push(String::from("LD"));
 
         // add the basic variable to the first column
@@ -109,8 +144,10 @@ impl SimplexMethod {
         
         self.update_table();
         self.print_table();
+    }
 
-        std::process::exit(1);
+    pub fn trunc(&self, num: f64) -> f64 {
+        (num * 1000.0).trunc() / 1000.0
     }
 
     pub fn update_table(&mut self) {
@@ -126,8 +163,9 @@ impl SimplexMethod {
                 if self.table[i].len() < self.increased[0].len() {
                     self.table[i].resize(self.increased[0].len() + 1, String::new());
                 }
-                
+
                 self.table[i][j] = self.increased[i - 1][j - 1].to_string();
+                self.table[i][j] = parse_to_frac(&self.table[i][j]);
             }
         }
     }
@@ -145,5 +183,22 @@ impl SimplexMethod {
 
         println!();
     }
+
+    pub fn print_increased(&self) {
+        
+        println!();
+
+        for row in self.increased.iter() {
+
+            for item in row {
+                print!("{:<8}", format!("{:.2}", item));
+            }
+
+            println!();
+        }
+
+        println!();
+    }
+
 }
 

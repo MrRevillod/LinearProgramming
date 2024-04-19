@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+
+#[allow(dead_code)]
 
 pub type A = Vec<Vec<f64>>;
 pub type B = Vec<f64>;
@@ -19,6 +23,7 @@ impl Point {
     }
 }
 
+#[allow(warnings)]
 #[derive(Debug, Clone)]
 pub enum Operation {
     Lt,
@@ -26,13 +31,19 @@ pub enum Operation {
     Eq,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub enum Algorithm {
+    Graphic(GraphicMethod),
+    Simplex(SimplexMethod),
+}
+
+#[derive(Debug, Clone)]
 pub enum ProblemKind {
     Maximize,
     Minimize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GraphicMethod {
     pub kind: ProblemKind,
     pub a: A,
@@ -47,7 +58,7 @@ pub struct GraphicMethod {
 }
 
 #[allow(warnings)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SimplexMethod {
     pub kind: ProblemKind,
     pub a: A,
@@ -58,5 +69,6 @@ pub struct SimplexMethod {
     pub table: Vec<Vec<String>>,
     pub pivot: (usize, usize),
     pub two_fases: bool,
-    pub n_vars: usize
+    pub n_vars: usize,
+    pub var_positions: HashMap<char, Vec<usize>>
 }

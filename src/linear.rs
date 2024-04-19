@@ -1,4 +1,6 @@
 
+#![allow(dead_code)]
+
 use crate::types::*;
 
 pub fn determinant(a: &A) -> f64 {

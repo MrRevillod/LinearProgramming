@@ -1,41 +1,35 @@
 
-#[allow(warnings)]
+#![allow(dead_code)]
+
 pub static INPUT_I: &str = "
-Graphic
-+
-z = 2x + 2y
-2x + 1y <= 100
-1x + 3y <= 80
-1x + 0y <= 45
-0x + 1y <= 100
-1x + 0y >= 0
-0x + 1y >= 0
+Graphic +
+z = 2x1 + 2x2
+2x1 + 1.2x2 <= 100
+0x1 + 2x2 <= 80
+1x1 + 0x2 <= 45
+0x1 + 1x2 <= 100
+1x1 + 0x2 >= 0
+0x1 + 1x2 >= 0
 ";
 
-#[allow(warnings)]
 pub static INPUT_II: &str = "
-Simplex
-+
+Simplex +
 z = 2x1 + 2x2
-2x1 + 1x2 <= 100
-1x1 + 3x2 <= 80
+2.2x1 + 1x2 <= 100
+1x1 + 0.2x2 <= 80
 1x1 + 0x2 <= 45
 0x1 + 1x2 <= 100
 ";
 
-#[allow(warnings)]
 pub static INPUT_III: &str = "
-Simplex
--
+Simplex +
 z = 5x1 + 8x2
-1x1 + 1x2 >= 8
+1x1 + 1x2 <= 10
 0x1 + 1x2 <= 8
 ";
 
-#[allow(warnings)]
 pub static INPUT_IV: &str = "
-Graphic
-+
+Graphic +
 z = 3x + 5y 
 1x + 0y <= 4
 0x + 2y <= 12
@@ -44,13 +38,11 @@ z = 3x + 5y
 1x + 0y >= 0
 ";
 
-#[allow(warnings)]
 pub static INPUT_V: &str = "
-Simplex
-+
-z = 3x1 + 5x2
-1x1 + 0x2 <= 4
-0x1 + 2x2 <= 12
-3x1 + 2x2 <= 18
+Simplex -
+z = 0.12x1 + 0.15x2
+60x1 + 60x2 >= 300
+12x1 + 6x2 >= 36
+10x1 + 30x2 >= 90
 ";
 
