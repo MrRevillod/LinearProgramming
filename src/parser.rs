@@ -97,13 +97,13 @@ pub fn parse_to_frac(str_number: &String) -> String {
         .parse::<f64>().unwrap()
     ;
 
-    if value_vec.len() > 7 && value < 0f64 {
-        value_vec.truncate(5)
-    }
-
-    if value_vec.len() > 7 && value > 0f64 {
-        value_vec.truncate(5)
-    }
+    // if value_vec.len() > 7 && value < 0f64 {
+    //     value_vec.truncate(6)
+    // }
+    //
+    // if value_vec.len() > 7 && value > 0f64 {
+    //     value_vec.truncate(5)
+    // }
 
     let value_str = value_vec.clone()
         .into_iter()

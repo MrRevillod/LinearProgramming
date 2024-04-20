@@ -3,6 +3,18 @@
 
 use crate::types::*;
 
+pub fn precision_f64(x: f64, decimals: u32) -> f64 {
+    if x == 0. || decimals == 0 {
+        0.
+    } else {
+
+        let shift = decimals as i32 - x.abs().log10().ceil() as i32;
+        let shift_factor = 10_f64.powi(shift);
+
+        (x * shift_factor).round() / shift_factor
+    }
+}
+
 pub fn determinant(a: &A) -> f64 {
     (a[0][0] * a[1][1] - (a[1][0] * a[0][1])) as f64
 }

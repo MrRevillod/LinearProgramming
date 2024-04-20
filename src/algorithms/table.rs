@@ -141,6 +141,8 @@ impl SimplexMethod {
         for i in 0..self.increased.len() { // add the result (b) column
             self.increased[i].push(self.b[i].clone()) // to the increased form matrix
         }
+
+        println!("\nForma aumentada inicial...");
         
         self.update_table();
         self.print_table();
@@ -161,7 +163,7 @@ impl SimplexMethod {
                 }
 
                 self.table[i][j] = self.increased[i - 1][j - 1].to_string();
-                self.table[i][j] = parse_to_frac(&self.table[i][j]);
+                // self.table[i][j] = parse_to_frac(&self.table[i][j]);
             }
         }
     }
@@ -172,7 +174,9 @@ impl SimplexMethod {
 
         for row in self.table.iter() {
 
-            for item in row { print!("{:<8}", item) }
+            for item in row {
+                print!("{:<8}", format!("{:.5}", item));
+            }
 
             println!();
         }

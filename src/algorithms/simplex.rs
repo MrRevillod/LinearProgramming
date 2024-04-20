@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 
 use crate::types::*;
+use crate::linear::precision_f64;
 
 impl SimplexMethod {
     
@@ -103,12 +104,15 @@ impl SimplexMethod {
 
     fn pivoting(&mut self) {
 
-        while !self.should_finish() {
+        let mut umbral = 0;
+
+        while !self.should_finish() || umbral >= 12 {
 
             let p_index = self.get_pivot_indexes();
             let mut increased = self.increased.clone();
-
             let pivot = increased[p_index.0][p_index.1];
+
+            println!("Pivote: {} - Fila {} - Columna {}", &pivot, p_index.0, p_index.1);
 
             // Dividir fila pivote por pivote para hacer pivote = 1
             for value in increased[p_index.0].iter_mut() {
@@ -128,16 +132,18 @@ impl SimplexMethod {
                     if increased[i][j].abs() <= f64::EPSILON {
                         increased[i][j] = 0f64;
                     }
+
+                    increased[i][j] = precision_f64(increased[i][j], 3);
                 }
             }
 
             self.pivot = p_index;
             self.increased = increased;
 
-            println!("{:?}", self.increased[0]);
-
             self.update_table();
             self.print_table();
+
+            umbral += 1;
         }
     }
 
@@ -145,13 +151,19 @@ impl SimplexMethod {
 
         println!("Iniciando primera fase ...");
 
-        // Restar las filas a la fila de la función objetivo
         for i in 1..self.increased.len() {
 
             for j in 0..self.increased[0].len() {
                 self.increased[0][j] += self.increased[i][j] * -1f64
             }
         }
+
+        println!("\nFilas restadas en fila z...");
+
+        self.update_table();
+        self.print_table();
+
+        println!("\nIniciando pivoteo...");
 
         self.pivoting();
         
@@ -178,10 +190,8 @@ impl SimplexMethod {
         }
 
         for i in 1..self.n_vars + 1 {
-            new_increased[0][i] = -self.c[i].clone();
+            new_increased[0][i] = self.c[i].clone() * -1_f64;
         }
-
-        println!("{:?}", new_increased[0]);
 
         self.pivot = (0, 0);
         self.increased = new_increased;
@@ -189,6 +199,8 @@ impl SimplexMethod {
         self.init_sec_fase_table();
         self.update_table();
         self.print_table();
+
+        self.pivoting();
     }
 
     pub fn solve(&mut self) {
