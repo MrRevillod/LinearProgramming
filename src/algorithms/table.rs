@@ -4,7 +4,6 @@
 use conditional::conditional;
 
 use crate::types::*;
-use crate::parser::parse_to_frac; 
 
 impl SimplexMethod {
 

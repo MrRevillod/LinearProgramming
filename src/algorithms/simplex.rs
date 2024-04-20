@@ -1,5 +1,7 @@
-
 #![allow(dead_code)]
+
+use std::thread;
+use std::time::Duration;
 
 use std::collections::HashMap;
 
@@ -93,20 +95,35 @@ impl SimplexMethod {
         index + 1
     }
 
-    fn should_finish(&self) -> bool {
+    fn should_finish(&mut self) -> bool {
+
+        println!("{:?}", self.increased[0]);
 
         for i in 1..self.increased[0].len() - 1 {
+
+            self.increased[0][i] = self.truncar_a_decimales(self.increased[0][i], 3);
+
+            self.increased[0][i] = self.redondear_a_decimales(self.increased[0][i], 2);
+
             if self.increased[0][i] < 0f64 { return false } else { continue }
         }
 
         true
     }
 
+    fn redondear_a_decimales(&self, numero: f64, decimales: usize) -> f64 {
+        let factor = 10.0_f64.powi(decimales as i32);
+        (numero * factor).round() / factor
+    }
+
+    fn truncar_a_decimales(&self, numero: f64, decimales: usize) -> f64 {
+        let factor = 10.0_f64.powi(decimales as i32);
+        (numero * factor).trunc() / factor
+    }
+
     fn pivoting(&mut self) {
 
-        let mut umbral = 0;
-
-        while !self.should_finish() || umbral >= 12 {
+        while !self.should_finish() {
 
             let p_index = self.get_pivot_indexes();
             let mut increased = self.increased.clone();
@@ -133,18 +150,21 @@ impl SimplexMethod {
                         increased[i][j] = 0f64;
                     }
 
-                    increased[i][j] = precision_f64(increased[i][j], 3);
                 }
             }
-
+            
             self.pivot = p_index;
             self.increased = increased;
 
             self.update_table();
             self.print_table();
-
-            umbral += 1;
+            
+            thread::sleep(Duration::from_millis(1000));
         }
+    }
+
+    fn casi_cero(&self, num: f64) -> bool {
+        num == 0f64 || num < -0.005
     }
 
     pub fn two_fases(&mut self) {
@@ -207,8 +227,9 @@ impl SimplexMethod {
         
         self.to_increased_form();
 
-        if self.two_fases {
-            self.two_fases();
+        match self.two_fases {
+            true => self.two_fases(),
+            false => self.pivoting()
         }
 
         std::process::exit(1);
