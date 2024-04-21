@@ -22,6 +22,7 @@ impl SimplexMethod {
 
         SimplexMethod {
             kind: data.0,
+            should_terminate: false,
             a: data.1, // coeffs
             b: data.2, // results
             c: data.3, // z row
@@ -33,7 +34,6 @@ impl SimplexMethod {
             n_vars: *n_vars,
             var_positions,
             artificial_rows: Vec::new(),
-            fase: 1,
         }
     }
 
@@ -85,12 +85,20 @@ impl SimplexMethod {
         let mut index = 0;
         let mut target = f64::INFINITY;
 
+        let mut all_invalid = true;
+
         for (i, &value) in div_vec.iter().enumerate() {
             
             if value > 0f64 && value < target {
+                all_invalid = false;
                 index = i;
                 target = value;
             }
+        }
+
+        if all_invalid {
+            println!("El programa ha terminado");
+            std::process::exit(0);
         }
 
         index + 1
