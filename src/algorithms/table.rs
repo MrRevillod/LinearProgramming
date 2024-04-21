@@ -60,7 +60,7 @@ impl SimplexMethod {
         
         let values: (f64, f64) = match &c { 
             'h' => (1.0, 0.0),
-            'a' => (1.0, -1.0),
+            'a' => (1.0, 1.0),
             'e' => (-1.0, 0.0),
             _   => panic!("Invalid var type")
         };
@@ -72,13 +72,21 @@ impl SimplexMethod {
 
         self.var_positions.get_mut(&c).unwrap().push(self.table[0].len() - 2);
 
+
         self.table[0].push(String::from("LD"));
 
         // add the basic variable to the first column
 
-        if values.0 == 1f64 {
-            for row in self.table.iter_mut() {
+        if c == 'a' || c == 'h' {
+            
+            for (i, row) in self.table.iter_mut().enumerate() {
+
                 if row.is_empty() {
+
+                    if c == 'a' {
+                        self.artificial_rows.push(i - 1);
+                    }
+
                     row.push(var_name.clone());
                     break
                 }
@@ -147,6 +155,8 @@ impl SimplexMethod {
         
         self.update_table();
         self.print_table();
+
+        println!("{:?}", self.artificial_rows);
     }
 
     pub fn update_table(&mut self) {

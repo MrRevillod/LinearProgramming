@@ -12,7 +12,7 @@ use parser::parse_problem;
 
 fn main() {
 
-    match parse_problem(INPUT_V) {
+    match parse_problem(INPUT_IV) {
         Algorithm::Graphic(mut graphic) => graphic.solve(),
         Algorithm::Simplex(mut simplex) => simplex.solve(),
     }

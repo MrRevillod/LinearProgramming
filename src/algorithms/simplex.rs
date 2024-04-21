@@ -33,6 +33,7 @@ impl SimplexMethod {
             two_fases: false,
             n_vars: *n_vars,
             var_positions,
+            artificial_rows: Vec::new(),
         }
     }
 
@@ -157,10 +158,10 @@ impl SimplexMethod {
 
         println!("Iniciando primera fase ...");
 
-        for i in 1..self.increased.len() {
+        for a_index in self.artificial_rows.iter() {
 
-            for j in 0..self.increased[0].len() {
-                self.increased[0][j] += self.increased[i][j] * -1f64
+            for i in 0..self.increased[0].len() {
+                self.increased[0][i] = self.increased[0][i] - self.increased[*a_index][i]
             }
         }
 
@@ -194,8 +195,6 @@ impl SimplexMethod {
 
             new_increased.push(row);
         }
-
-        std::process::exit(1);
 
         for i in 1..self.n_vars + 1 {
             new_increased[0][i] = self.c[i].clone() * -1_f64;

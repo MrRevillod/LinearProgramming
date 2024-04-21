@@ -70,5 +70,6 @@ pub struct SimplexMethod {
     pub pivot: (usize, usize),
     pub two_fases: bool,
     pub n_vars: usize,
-    pub var_positions: HashMap<char, Vec<usize>>
+    pub var_positions: HashMap<char, Vec<usize>>,
+    pub artificial_rows: Vec<usize>,
 }
