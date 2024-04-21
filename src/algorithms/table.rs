@@ -60,7 +60,7 @@ impl SimplexMethod {
         
         let values: (f64, f64) = match &c { 
             'h' => (1.0, 0.0),
-            'a' => (1.0, 1.0),
+            'a' => (1.0, -1.0),
             'e' => (-1.0, 0.0),
             _   => panic!("Invalid var type")
         };
@@ -104,7 +104,9 @@ impl SimplexMethod {
         let (mut a_count, mut e_count, mut h_count) = (1, 1, 1);
 
         for (i, operation) in self.operations.clone().iter().enumerate() {
+
             match operation {
+
                 Operation::Gt => {
                     self.two_fases = true;
                     self.add_variable('e', &mut e_count, &mut temp_a, &i);

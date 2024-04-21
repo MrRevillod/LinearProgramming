@@ -1,12 +1,12 @@
+
 #![allow(dead_code)]
 
 use std::thread;
 use std::time::Duration;
-
 use std::collections::HashMap;
 
+use crate::linear::casi_cero;
 use crate::types::*;
-use crate::linear::precision_f64;
 
 impl SimplexMethod {
     
@@ -101,24 +101,14 @@ impl SimplexMethod {
 
         for i in 1..self.increased[0].len() - 1 {
 
-            self.increased[0][i] = self.truncar_a_decimales(self.increased[0][i], 3);
+            // self.increased[0][i] = self.truncar_a_decimales(self.increased[0][i], 3);
+            // self.increased[0][i] = self.redondear_a_decimales(self.increased[0][i], 2);
 
-            self.increased[0][i] = self.redondear_a_decimales(self.increased[0][i], 2);
-
-            if self.increased[0][i] < 0f64 { return false } else { continue }
+            // if self.increased[0][i] < 0f64 { return false } else { continue }
+            if casi_cero(&mut self.increased[0][i].clone()) { return false } else { continue }
         }
 
         true
-    }
-
-    fn redondear_a_decimales(&self, numero: f64, decimales: usize) -> f64 {
-        let factor = 10.0_f64.powi(decimales as i32);
-        (numero * factor).round() / factor
-    }
-
-    fn truncar_a_decimales(&self, numero: f64, decimales: usize) -> f64 {
-        let factor = 10.0_f64.powi(decimales as i32);
-        (numero * factor).trunc() / factor
     }
 
     fn pivoting(&mut self) {
@@ -149,7 +139,6 @@ impl SimplexMethod {
                     if increased[i][j].abs() <= f64::EPSILON {
                         increased[i][j] = 0f64;
                     }
-
                 }
             }
             
@@ -163,9 +152,6 @@ impl SimplexMethod {
         }
     }
 
-    fn casi_cero(&self, num: f64) -> bool {
-        num == 0f64 || num < -0.005
-    }
 
     pub fn two_fases(&mut self) {
 
@@ -208,6 +194,8 @@ impl SimplexMethod {
 
             new_increased.push(row);
         }
+
+        std::process::exit(1);
 
         for i in 1..self.n_vars + 1 {
             new_increased[0][i] = self.c[i].clone() * -1_f64;

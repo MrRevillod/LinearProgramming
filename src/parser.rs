@@ -1,7 +1,4 @@
 
-use std::str::FromStr;
-use fraction::{Fraction, One};
-
 #[allow(warnings)]
 
 use crate::regex::*;
