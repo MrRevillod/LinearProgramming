@@ -32,7 +32,7 @@ Simplex -
 z = 0.12x1 + 0.15x2
 60x1 + 60x2 >= 300
 12x1 + 6x2 >= 36
-10x1 + 30x2 <= 90
+10x1 + 30x2 >= 90
 ";
 
 pub static INPUT_V: &str = "

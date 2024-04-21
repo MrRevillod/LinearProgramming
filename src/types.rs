@@ -72,4 +72,5 @@ pub struct SimplexMethod {
     pub n_vars: usize,
     pub var_positions: HashMap<char, Vec<usize>>,
     pub artificial_rows: Vec<usize>,
+    pub fase: u8,
 }

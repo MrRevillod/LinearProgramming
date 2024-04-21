@@ -5,7 +5,6 @@ use std::thread;
 use std::time::Duration;
 use std::collections::HashMap;
 
-use crate::linear::casi_cero;
 use crate::types::*;
 
 impl SimplexMethod {
@@ -34,6 +33,7 @@ impl SimplexMethod {
             n_vars: *n_vars,
             var_positions,
             artificial_rows: Vec::new(),
+            fase: 1,
         }
     }
 
@@ -98,15 +98,8 @@ impl SimplexMethod {
 
     fn should_finish(&mut self) -> bool {
 
-        println!("{:?}", self.increased[0]);
-
         for i in 1..self.increased[0].len() - 1 {
-
-            // self.increased[0][i] = self.truncar_a_decimales(self.increased[0][i], 3);
-            // self.increased[0][i] = self.redondear_a_decimales(self.increased[0][i], 2);
-
-            // if self.increased[0][i] < 0f64 { return false } else { continue }
-            if casi_cero(&mut self.increased[0][i].clone()) { return false } else { continue }
+            if self.increased[0][i] < 0f64 { return false } else { continue }
         }
 
         true
@@ -134,7 +127,7 @@ impl SimplexMethod {
                 for j in 0..increased[i].len() {
 
                     increased[i][j] = self.increased[i][j] - 
-                        increased[p_index.0][j] * self.increased[i][p_index.1]
+                        (increased[p_index.0][j] * self.increased[i][p_index.1])
                     ;
 
                     if increased[i][j].abs() <= f64::EPSILON {
@@ -153,10 +146,12 @@ impl SimplexMethod {
         }
     }
 
-
-    pub fn two_fases(&mut self) {
+    fn first_fase(&mut self) {
 
         println!("Iniciando primera fase ...");
+
+        // Restar filas con variable artificial (self.artificial_rows)
+        // En la fila de la Función objetivo (self.increased[0])
 
         for a_index in self.artificial_rows.iter() {
 
@@ -173,7 +168,10 @@ impl SimplexMethod {
         println!("\nIniciando pivoteo...");
 
         self.pivoting();
-        
+    }
+
+    pub fn second_fase(&mut self) {
+
         println!("Iniciando segunda fase ...");
 
         // Crear matríz sin variables artificiales
@@ -215,7 +213,10 @@ impl SimplexMethod {
         self.to_increased_form();
 
         match self.two_fases {
-            true => self.two_fases(),
+            true => {
+                self.first_fase();
+                self.second_fase();
+            },
             false => self.pivoting()
         }
 

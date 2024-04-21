@@ -155,8 +155,6 @@ impl SimplexMethod {
         
         self.update_table();
         self.print_table();
-
-        println!("{:?}", self.artificial_rows);
     }
 
     pub fn update_table(&mut self) {
@@ -174,7 +172,6 @@ impl SimplexMethod {
                 }
 
                 self.table[i][j] = self.increased[i - 1][j - 1].to_string();
-                // self.table[i][j] = parse_to_frac(&self.table[i][j]);
             }
         }
     }
@@ -186,7 +183,7 @@ impl SimplexMethod {
         for row in self.table.iter() {
 
             for item in row {
-                print!("{:<8}", format!("{:.5}", item));
+                print!(" {:<8} ", format!("{:.10}", item));
             }
 
             println!();
