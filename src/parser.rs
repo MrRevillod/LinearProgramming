@@ -65,13 +65,6 @@ pub fn parse_problem(text: &str) -> Algorithm {
 
         "Simplex" => {
 
-            b.insert(0, 0f64);
-
-            match kind {
-                ProblemKind::Maximize => z.insert(0, 1f64),
-                ProblemKind::Minimize => z.insert(0, -1f64),
-            }
-
             Algorithm::Simplex(
                 SimplexMethod::new((kind, a, b, z, operations))
             )

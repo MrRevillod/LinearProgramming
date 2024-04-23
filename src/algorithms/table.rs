@@ -53,18 +53,11 @@ impl SimplexMethod {
         self.table = table;
     }
 
-    // Complete the matrix with h ; a ; e
-
-    // 2 fases => Preparar ecuaciones:
-    //
-    // <= : + holgura_n
-    // >= : - exceso_n + artificial_n
-
     pub fn add_variable(&mut self, c: char, count: &mut usize, a: &mut A, iter: &usize) {
 
         // Update table variables
         // values = ( a var value, z var value )
-        
+
         let values: (f64, f64) = match &c { 
             'h' => (1.0, 0.0),
             'a' => (1.0, 1.0),
@@ -78,7 +71,6 @@ impl SimplexMethod {
         self.table[0].push(var_name.clone());
 
         self.var_positions.get_mut(&c).unwrap().push(self.table[0].len() - 2);
-
 
         self.table[0].push(String::from("LD"));
 
@@ -140,6 +132,11 @@ impl SimplexMethod {
             row.insert(0, 0f64); // add the initial 0 column
         }
 
+        match self.kind {
+            ProblemKind::Maximize => self.c.insert(0, 1f64),
+            ProblemKind::Minimize => self.c.insert(0, -1f64),
+        }
+
         self.increased.insert(0, self.c.clone()); // push the z row (c) into increased
 
         if self.two_fases {
@@ -154,6 +151,8 @@ impl SimplexMethod {
                 self.increased[0][i] *= -1f64
             }
         }
+
+        self.b.insert(0, 0f64);
 
         for i in 0..self.increased.len() { // add the result (b) column
             self.increased[i].push(self.b[i].clone()) // to the increased form matrix
@@ -191,7 +190,8 @@ impl SimplexMethod {
         for row in self.table.iter() {
 
             for item in row {
-                print!(" {:<8} ", format!("{:.10}", item));
+                print!("|");
+                print!("{:<8}", format!("{:.6}", item));
             }
 
             println!();

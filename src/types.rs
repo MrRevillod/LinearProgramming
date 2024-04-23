@@ -37,7 +37,7 @@ pub enum Algorithm {
     Simplex(SimplexMethod),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum ProblemKind {
     Maximize,
     Minimize,
@@ -61,6 +61,7 @@ pub struct GraphicMethod {
 #[derive(Debug, Clone)]
 pub struct SimplexMethod {
     pub kind: ProblemKind,
+    pub should_terminate: bool,
     pub a: A,
     pub b: B,
     pub c: C,
@@ -72,5 +73,5 @@ pub struct SimplexMethod {
     pub n_vars: usize,
     pub var_positions: HashMap<char, Vec<usize>>,
     pub artificial_rows: Vec<usize>,
-    pub fase: u8,
+    pub pivot_row_history: Vec<usize>,
 }
