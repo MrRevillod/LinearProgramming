@@ -3,7 +3,7 @@
 
 use crate::types::*;
 use crate::linear::*;
-// use inline_python::python;
+use inline_python::python;
 
 impl GraphicMethod {
 
@@ -132,75 +132,100 @@ impl GraphicMethod {
         let intersections = self.python_intersections.clone();
         let inequalities = self.inequalities.clone();
         let optimal_point = self.optimal_point.clone();
+        
         let z = self.z.clone();
+        let b = self.b.clone();
 
-        // python! {
-        //
-        //     import matplotlib.pyplot as plt
-        //     from matplotlib.patches import Polygon
-        //     import numpy as np
-        //     import matplotlib.animation as animation
-        //
-        //     def pyformat(x, i):
-        //         return x+str(i)
-        //
-        //     intersections = 'intersections
-        //     inequalities = 'inequalities
-        //     optimal_point = 'optimal_point
-        //     z = 'z
-        //
-        //     polygon = Polygon(intersections, closed=True, fill=True, color="red", alpha=0.3)
-        //
-        //     domain_animation = np.arange(round(-optimal_point[0]*30), round(optimal_point[1]*30), 0.1)
-        //
-        //     operations = {}
-        //
-        //     for i, p in enumerate(inequalities):
-        //         if p[2] == 0:
-        //             operations[pyformat("x",i)] = p[0]/ p[1]
-        //         else:
-        //             operations[pyformat("f",i)] = lambda x, coefs=p: (coefs[0] - coefs[1] * x) / coefs[2]
-        //
-        //     fig, ax = plt.subplots()
-        //     ax.plot([round(-optimal_point[0]*30), round(optimal_point[0]*30)], [0,0], linewidth=2, color="black", alpha=1.0)
-        //     ax.plot([0,0], [round(-optimal_point[1]*30), round(optimal_point[1]*30)], linewidth=2, color="black", alpha=1.0)
-        //
-        //
-        //     for key, func in operations.items():
-        //         if type(func) == float:
-        //             x_values = np.full(len(domain_animation), func)
-        //             // y_values = np.arange(0.0, 10.0, 1.0)
-        //             ax.plot(x_values, domain_animation, alpha=0.75, linestyle="--")
-        //         else: 
-        //             x_values = domain_animation
-        //             y_values = [func(x) for x in domain_animation]
-        //             ax.plot(x_values, y_values, alpha=0.75, linestyle="--")
-        //
-        //     line, = ax.plot([])
-        //
-        //     def animate(i):
-        //         // A*x + B*y = Z = 0 --> y = (-A * x) / B + i *
-        //         y = (-z[0]*domain_animation) / z[1] + i
-        //         line.set_data(domain_animation, y)
-        //         return line,
-        //
-        //     ani = animation.FuncAnimation(
-        //         fig, func=animate, frames=np.arange(round(-optimal_point[0]*0.1), 
-        //         round(optimal_point[0]*3), 0.1), interval=1)
-        //
-        //     ax.add_patch(polygon)
-        //
-        //     ax.plot(optimal_point[0], optimal_point[1], marker="o", markersize=13, 
-        //             markeredgecolor="red", markerfacecolor="yellow", 
-        //             label=str(optimal_point[0])+", "+str(optimal_point[1]))
-        //
-        //     ax.set_xlim(round(-optimal_point[0]*2), round(optimal_point[0]*4))
-        //     ax.set_ylim(round(-optimal_point[1]*2), round(optimal_point[1]*4))
-        //     ax.grid()
-        //     ax.legend()
-        //
-        //     plt.show()
-        // }
+        python! {
+
+            // matplotlib.pyplot -> Graficos
+            import matplotlib.pyplot as plt
+            // matplotlib.patches -> Rellenar el área factible con Polygon
+            from matplotlib.patches import Polygon
+            // numpy -> Manipulación de arreglos para los datos de los gráficos
+            import numpy as np
+
+            // Pasamos de objetos en rust a python
+            intersections = 'intersections
+            inequalities = 'inequalities
+            optimal_point = 'optimal_point
+            b = 'b
+            z = 'z
+
+            // Arreglo de valores que se adaptan segun el mayor valor del vector 
+            // b(terminos independientes de las restricciones)
+
+            domain = np.arange(-max(b)*1.25, max(b)*2)
+
+            // Diccionario para guardar las funciones de las restricciones y Z
+            operations = {}
+
+            // Función de formateo de string para añadir las funciones de manera dinamica al diccionario
+            def pyformat(x, i):
+                return x+str(i)
+
+            // Rellenar de forma dinamica el diccionario con las restricciones
+            for i, p in enumerate(inequalities):
+                if p[2] == 0:
+                    operations[pyformat("x",i)] = p[0]/ p[1]
+                else:
+                    operations[pyformat("f",i)] = lambda x, coefs=p: (coefs[0] - coefs[1] * x) / coefs[2]
+
+            // Inicialización de los objetos de graficación(no se utiliza el objeto fig, que sirve para modificar la "ventana")
+            fig, ax = plt.subplots()
+
+            // Graficación de los ejes x ,eje y. Proporcinalmente al Par coordenado Óptimo
+            ax.plot([round(-max(b)*10), round(max(b)*10)], [0,0], color="black", alpha=0.3)
+            ax.plot([0,0], [round(-max(b)*10), round(max(b)*10)], color="black", alpha=0.3)
+
+            // Se recorre el diccionario de restricciones
+            for key, func in operations.items():
+                // si es constante no se evalua la función, si no que el recorrido se rellena con el mismo valor
+                if type(func) == float:
+                    x_values = np.full(len(domain), func)
+                    ax.plot(x_values, domain, alpha=0.4, linestyle="--")
+                // en los otros casos, se evalua las funciones con el dominio anteriormente generado
+                else: 
+                    x_values = domain
+                    y_values = [func(x) for x in domain]
+                    ax.plot(x_values, y_values, alpha=0.4, linestyle="--")
+
+            // Polygon es una clase que recibe una matriz que contiene las intersecciones, y forma un polygono que con
+            // el parametro "fill" se rellena
+            polygon = Polygon(intersections, closed=False, fill=True, color="red", alpha=0.3)
+
+            // Pinta el poligono
+            ax.add_patch(polygon)
+
+            // Marcar las intersecciones de la región factible con un punto y poner su punto P(x,y) = $(z)
+            for x, y in intersections:
+                ax.text(x, y, "Z("+str(round(x))+","+str(round(y))+")="+str(round((z[0]*x + z[1]*y),1)),
+                        ha="center", va="bottom")
+                ax.plot(x, y, marker="o", markersize=6, color="green", alpha=0.7)
+
+            // El termino inpendiente para poder graficar la función Z sobre el punto óptimo
+            z_independent_term = optimal_point[1] - (-(z[0]/z[1]) * optimal_point[0])
+
+            // Agregar la función Z ya sobre el punto optimo
+            operations["z(x)"] = lambda x: -(z[0]/z[1]) * x + z_independent_term
+
+            // Evaluación de la Z para poder graficarla
+            z_recorrido = [operations["z(x)"](x) for x in domain]
+            
+            // Graficar Z
+            ax.plot(domain, z_recorrido, color="purple", alpha=0.4)
+
+            // Marcar el punto óptimo de forma más marcada
+            ax.plot(optimal_point[0], optimal_point[1], marker="o", markersize=13, 
+                    markeredgecolor="red", markerfacecolor="yellow")
+
+            // Define los limites a los que llegan los ejes, en base al punto óptimo
+            ax.set_xlim(round(-max(b)), round(max(b)))
+            ax.set_ylim(round(-max(b)), round(max(b)))
+            ax.grid(alpha=0.3)
+
+            plt.show()
+        }
     }
 
     pub fn solve(&mut self) {

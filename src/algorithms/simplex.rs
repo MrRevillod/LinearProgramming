@@ -22,32 +22,44 @@ impl SimplexMethod {
 
         SimplexMethod {
             kind: data.0,
-            should_terminate: false,
             a: data.1, // coeffs
             b: data.2, // results
             c: data.3, // z row
-            operations: data.4,
-            increased: Vec::new(),
-            table: Vec::new(),
-            pivot: (0, 0),
-            two_fases: false,
-            n_vars: *n_vars,
-            var_positions,
-            artificial_rows: Vec::new(),
+            operations: data.4, // Enum operation vector
+            increased: Vec::new(), // increased form matrix
+            table: Vec::new(), // String increased form
+            pivot: (0, 0), // pivot coordinates (i, j)
+            two_fases: false, // indicador si el problema es uno de 2 fases
+            n_vars: *n_vars, // Cantidad de variables xn
+            var_positions, // hashmap to allocate the variable positions
+            artificial_rows: Vec::new(), // vector to allocate the artificial rows
+            fase: 1,
         }
     }
 
-    // Complete the matrix with h ; a ; e
-
-    // 2 fases => Preparar ecuaciones:
-    //
-    // <= : + holgura_n
-    // >= : - exceso_n + artificial_n
+    // Obtener indices del pivot actual 
+    // retorna una tupa con las coordenadas (i, j)
 
     fn get_pivot_indexes(&self) -> (usize, usize) {
         
         let mut div_vec = vec![];
-        let c_index = self.pivot_column();
+        
+        // Dependiendo del tipo de problema debemos seleccionar
+        // la columna pivote de una forma u otra
+        //
+        // Maximización => Menor negativo
+        // Minimización => Mayor positivo
+
+        let mut c_index = self.pivot_column_minimun();
+
+        if self.fase == 2 && self.kind == ProblemKind::Minimize {
+            c_index = self.pivot_column_largest();
+        }
+
+        // Obtener vector auxiliar con los resultados
+        // de la división entre col pivote y col de resultados
+        //
+        // El menor valor de este vector seleccionará el indice de la fila pivote
 
         for i in 1..self.increased.len() {
             
@@ -57,12 +69,14 @@ impl SimplexMethod {
             div_vec.push(res / col);
         }
 
+        println!("\nPivot vector aux: {:?}", div_vec);
+
         let r_index = self.max_row_pivot(div_vec);
 
         (r_index, c_index)
     }
 
-    fn pivot_column(&self) -> usize {
+    fn pivot_column_minimun(&self) -> usize {
         
         let mut index = 0;
         let mut value = 0f64;
@@ -80,6 +94,28 @@ impl SimplexMethod {
         index
     }
 
+    fn pivot_column_largest(&self) -> usize {
+
+        let mut index = 0;
+        let mut value = 0f64;
+
+        let select = |x: f64, y: f64| x > y && x > 0f64;
+
+        for i in 1..self.increased[0].len() - 1 {
+            if select(self.increased[0][i], value) {
+                value = self.increased[0][i];
+                index = i;
+            }
+        }
+
+        index
+    }
+
+    // Obtener indice de la fila pivote mediante el 
+    // vector de division.
+    //
+    // El valor seleccionado corresponde al menor positivo del vector.
+
     fn max_row_pivot(&self, div_vec: Vec<f64>) -> usize {
         
         let mut index = 0;
@@ -96,15 +132,26 @@ impl SimplexMethod {
             }
         }
 
+        // Si no se encuentra un valor positivo mayor a 0
+        // o sea, son todo negativos o infinitos (x/0) el 
+        // algoritmo debe terminar
+
         if all_invalid {
-            println!("El programa ha terminado");
+            println!("No hay una fila pivote valida a seleccionar");
             std::process::exit(0);
         }
+
+        // Se retorna el indice + 1 ya que el conteo de filas se salta
+        // la fila de la función objetivo (fila 0)
 
         index + 1
     }
 
-    fn should_finish(&mut self) -> bool {
+    // Caso base de finalización
+    // retorna false si encuentra un valor negativo, por lo tanto el algoritmo
+    // continua, de lo contrario retorna true y el algoritmo finaliza
+
+    pub fn should_finish(&mut self) -> bool {
 
         for i in 1..self.increased[0].len() - 1 {
             if self.increased[0][i] < 0f64 { return false } else { continue }
@@ -113,107 +160,57 @@ impl SimplexMethod {
         true
     }
 
-    fn pivoting(&mut self) {
+    // Pivoteo / eliminación gaussiana
+    // se utilizan las funciones definidas anteriormente
 
+    pub fn pivoting(&mut self) {
+
+        let p_index = self.get_pivot_indexes();
+        let mut increased = self.increased.clone();
+        let pivot = increased[p_index.0][p_index.1];
+
+        println!("Pivote: {} - Fila {} - Columna {}", &pivot, p_index.0, p_index.1);
+
+        // Dividir fila pivote por pivote para hacer pivote = 1
+
+        for value in increased[p_index.0].iter_mut() {
+            *value /= pivot;
+        }
+
+        // Se itera sobre la matriz clonada y se aplica el pivoteo gaussiano
+
+        for i in 0..increased.len() {
+            
+            if i == p_index.0 { continue }
+
+            for j in 0..increased[i].len() {
+
+                increased[i][j] = self.increased[i][j] - 
+                    (increased[p_index.0][j] * self.increased[i][p_index.1])
+                ;
+
+                if increased[i][j].abs() <= f64::EPSILON {
+                    increased[i][j] = 0f64;
+                }
+            }
+        }
+
+        // Actualizar parametros de la instacia y mostrar la tabla.
+        
+        self.pivot = p_index;
+        self.increased = increased;
+
+        self.update_table();
+        self.print_table();
+        
+        thread::sleep(Duration::from_millis(1000));
+    }
+
+    fn one_fase(&mut self) {
+        
         while !self.should_finish() {
-
-            let p_index = self.get_pivot_indexes();
-            let mut increased = self.increased.clone();
-            let pivot = increased[p_index.0][p_index.1];
-
-            println!("Pivote: {} - Fila {} - Columna {}", &pivot, p_index.0, p_index.1);
-
-            // Dividir fila pivote por pivote para hacer pivote = 1
-            for value in increased[p_index.0].iter_mut() {
-                *value /= pivot;
-            }
-
-            for i in 0..increased.len() {
-                
-                if i == p_index.0 { continue }
-
-                for j in 0..increased[i].len() {
-
-                    increased[i][j] = self.increased[i][j] - 
-                        (increased[p_index.0][j] * self.increased[i][p_index.1])
-                    ;
-
-                    if increased[i][j].abs() <= f64::EPSILON {
-                        increased[i][j] = 0f64;
-                    }
-                }
-            }
-            
-            self.pivot = p_index;
-            self.increased = increased;
-
-            self.update_table();
-            self.print_table();
-            
-            thread::sleep(Duration::from_millis(1000));
+            self.pivoting()
         }
-    }
-
-    fn first_fase(&mut self) {
-
-        println!("Iniciando primera fase ...");
-
-        // Restar filas con variable artificial (self.artificial_rows)
-        // En la fila de la Función objetivo (self.increased[0])
-
-        for a_index in self.artificial_rows.iter() {
-
-            for i in 0..self.increased[0].len() {
-                self.increased[0][i] = self.increased[0][i] - self.increased[*a_index][i]
-            }
-        }
-
-        println!("\nFilas restadas en fila z...");
-
-        self.update_table();
-        self.print_table();
-
-        println!("\nIniciando pivoteo...");
-
-        self.pivoting();
-    }
-
-    pub fn second_fase(&mut self) {
-
-        println!("Iniciando segunda fase ...");
-
-        // Crear matríz sin variables artificiales
-        // self.var_positions => diccionario con las posiciones de las variables
-
-        let mut new_increased = Vec::new();
-
-        for i in 0..self.increased.len() {
-
-            let mut row = Vec::new();
-
-            for j in 0..self.increased[0].len() {
-
-                if !self.var_positions.get(&'a').unwrap().contains(&j) {
-
-                    row.push(self.increased[i][j])
-                }
-            }
-
-            new_increased.push(row);
-        }
-
-        for i in 1..self.n_vars + 1 {
-            new_increased[0][i] = self.c[i].clone() * -1_f64;
-        }
-
-        self.pivot = (0, 0);
-        self.increased = new_increased;
-
-        self.init_sec_fase_table();
-        self.update_table();
-        self.print_table();
-
-        self.pivoting();
     }
 
     pub fn solve(&mut self) {
@@ -221,11 +218,8 @@ impl SimplexMethod {
         self.to_increased_form();
 
         match self.two_fases {
-            true => {
-                self.first_fase();
-                self.second_fase();
-            },
-            false => self.pivoting()
+            true => self.two_fases(),
+            false => self.one_fase(),
         }
 
         std::process::exit(1);

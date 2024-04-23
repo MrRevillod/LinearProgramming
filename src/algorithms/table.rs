@@ -53,6 +53,13 @@ impl SimplexMethod {
         self.table = table;
     }
 
+    // Complete the matrix with h ; a ; e
+
+    // 2 fases => Preparar ecuaciones:
+    //
+    // <= : + holgura_n
+    // >= : - exceso_n + artificial_n
+
     pub fn add_variable(&mut self, c: char, count: &mut usize, a: &mut A, iter: &usize) {
 
         // Update table variables
@@ -120,6 +127,7 @@ impl SimplexMethod {
                     self.add_variable('e', &mut e_count, &mut temp_a, &i);
                     self.add_variable('a', &mut a_count, &mut temp_a, &i);
                 },
+
                 Operation::Lt | Operation::Eq => {
                     self.add_variable('h', &mut h_count, &mut temp_a, &i);
                 }
