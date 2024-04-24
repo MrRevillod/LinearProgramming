@@ -3,12 +3,22 @@
 
 //FUNCIONA => 112 x1: 44 y x2: 12
 pub static INPUT_I: &str = "
-Simplex +
+Graphic +
 z = 2x1 + 2x2
 2x1 + 1x2 <= 100
 1x1 + 3x2 <= 80
 1x1 + 0x2 <= 45
 0x1 + 1x2 <= 100
+1x1 + 0x2 >= 0
+0x1 + 1x2 >= 0
+";
+
+pub static prueba: &str = "
+Simplex -
+z = 6x1 + 4x2 + 5x3
+1x1 + 2x2 + 3x3 <= 40
+3x1 + 1x2 + 4x3 >= 30
+2x1 + 3x2 + 1x3 <= 60
 ";
 
 // FUNCIONA => 36K x1: 2 y x2: 6
