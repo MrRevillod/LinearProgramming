@@ -27,6 +27,7 @@ pub struct Problem {
     pub indexes_a: Vec<Vec<usize>>,
     pub coefs: Vec<f64>,
     pub coefs_indexes: Vec<usize>,
+    pub vb: Vec<(usize, usize)>,
 }
 
 
@@ -146,5 +147,6 @@ pub fn parse(file_name: &str) -> Problem {
     let indexes_a = Vec::new();
     let coefs = Vec::new();
     let coefs_indexes = Vec::new();
-    Problem { obj, constrains, func, indexes_a, coefs, coefs_indexes }
+    let vb = Vec::new();
+    Problem { obj, constrains, func, indexes_a, coefs, coefs_indexes, vb }
 }

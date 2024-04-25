@@ -16,7 +16,6 @@ fn main() {
     }
 
     let mut problem = parser::parse(&args[1]);
-    dbg!(problem.clone());
 
     simplex(&mut problem);
     // dbg!(problem);

@@ -21,27 +21,21 @@ fn get_x_pivot(vector: Vec<Vec<f64>>) -> usize {
     let mut index = 1;
     let mut min = vector[0][index];
 
-    let mut all_equal = true;
-
-
     for i in 2..(vector[0].len() - 1) {
         if vector[0][i] < min && vector[0][i] < 0.0 {
             min = vector[0][i];
             index = i;
         }
-        if min != vector[0][i] && vector[0][i] < 0.0 {
-            all_equal = false;
-        }
+        if 
     }
+
     if all_equal {
         let mut indexes = Vec::new();
         for i in 1..(vector[0].len() - 1) {
             if vector[0][i] >= 0.0 { continue; }
             indexes.push(i);
         }
-
         let mut divs_vector = Vec::new();
-
         for i in indexes.iter() {
             let mut div = Vec::new();
             for j in 1..vector.len() {
@@ -49,24 +43,18 @@ fn get_x_pivot(vector: Vec<Vec<f64>>) -> usize {
             }
             divs_vector.push((i, div));
         }
-
-
         let mut minor_vector = Vec::new();
         for i in divs_vector {
-
             let mut min = i.1[0];
             for j in 1..i.1.len() {
                 if min > i.1[j] && i.1[j] > 0.0 {
                     min = i.1[j];
                 }
             }
-
             minor_vector.push((i.0, min));
         }
         
-
         let mut max_index = 0;
-
         for i in 0..minor_vector.len() {
             if minor_vector[i].1 > minor_vector[max_index].1 {
                 max_index = i;
@@ -83,7 +71,7 @@ fn get_min_div(div_vector: Vec<f64>) -> usize {
     let mut index = 0;
 
     for i in 0..div_vector.len() {
-        if div_vector[i] < min && div_vector[i] > 0.0 {
+        if div_vector[i] < min && div_vector[i] >= 0.0 {
             min = div_vector[i];
             index = i;
         }
@@ -93,7 +81,6 @@ fn get_min_div(div_vector: Vec<f64>) -> usize {
 }
 
 fn get_y_pivot(matrix: Vec<Vec<f64>>, x_pivot: usize) -> usize {
-    
     let mut div_vector = Vec::new();
 
     let n_size = matrix[0].len();
@@ -111,9 +98,59 @@ fn get_y_pivot(matrix: Vec<Vec<f64>>, x_pivot: usize) -> usize {
     index
 }
 
+fn get_y_pivot_two_fases(problem: &mut Problem, matrix: Vec<Vec<f64>>, x_pivot: usize) -> usize {
+
+    dbg!(problem.clone());
+
+    let mut div_vector = Vec::new();
+
+    let n_size = matrix[0].len();
+
+    for i in 1..matrix.len() {
+        div_vector.push(matrix[i][n_size - 1] / matrix[i][x_pivot]);
+    }
+
+    let mut index = get_min_div(div_vector.clone());
+
+    let mut is_there = false;
+    for i in 0..problem.vb.len() {
+        if index == problem.vb[i].0 {
+            is_there = true;
+            break;
+        }
+    }
+
+    while is_there {
+        div_vector[index - 1] = -1.0;
+        index = get_min_div(div_vector.clone());
+        for i in 0..problem.vb.len() {
+            if index == problem.vb[i].0 {
+                is_there = true;
+                break;
+            }
+            is_there = false;
+        }
+    }
+
+    if index == 0 {
+        std::process::exit(1);
+    }
+
+    index
+}
+
 fn get_pivot_indexes(matrix: &Vec<Vec<f64>>) -> (usize, usize) {
     let x_pivot = get_x_pivot(matrix.clone());
     let y_pivot = get_y_pivot(matrix.clone(), x_pivot);
+
+    (y_pivot, x_pivot)
+}
+
+fn get_pivot_indexes_two_fases(problem: &mut Problem, matrix: &Vec<Vec<f64>>) -> (usize, usize) {
+    let x_pivot = get_x_pivot(matrix.clone());
+    let y_pivot = get_y_pivot_two_fases(problem, matrix.clone(), x_pivot);
+
+    problem.vb.push((y_pivot, x_pivot));
 
     (y_pivot, x_pivot)
 }
@@ -313,7 +350,7 @@ fn first_fase(problem: &mut Problem) -> Vec<Vec<f64>> {
 
     while !should_finish(s_matrix[c_matrix][0].clone()) {
 
-        let (y_pivot, x_pivot) = get_pivot_indexes(s_matrix[c_matrix]);
+        let (y_pivot, x_pivot) = get_pivot_indexes_two_fases(problem, s_matrix[c_matrix]);
 
         problem.coefs_indexes[y_pivot] = x_pivot;
 
@@ -375,10 +412,11 @@ fn initial_matrix_second_fase(problem: Problem, matrix: &mut Vec<Vec<f64>>) -> V
     for x in matrix.clone() {
         println!("{:?}", x);
     }
+    println!("");
     matrix.to_vec()
 }
 
-fn second_fase(problem: Problem, matrix: &mut Vec<Vec<f64>>) {
+fn second_fase(mut problem: Problem, matrix: &mut Vec<Vec<f64>>) {
     println!("Segunda fase:");
 
     let mut matrix = initial_matrix_second_fase(problem.clone(), matrix);
@@ -395,7 +433,7 @@ fn second_fase(problem: Problem, matrix: &mut Vec<Vec<f64>>) {
 
     while !should_finish(s_matrix[c_matrix][0].clone()) {
 
-        let (y_pivot, x_pivot) = get_pivot_indexes(s_matrix[c_matrix]);
+        let (y_pivot, x_pivot) = get_pivot_indexes_two_fases(&mut problem, s_matrix[c_matrix]);
 
 
         pivoting(s_matrix[c_matrix].to_vec(), &mut s_matrix[l_matrix], x_pivot, y_pivot);
