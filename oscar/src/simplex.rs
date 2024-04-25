@@ -21,12 +21,17 @@ fn get_x_pivot(vector: Vec<Vec<f64>>) -> usize {
     let mut index = 1;
     let mut min = vector[0][index];
 
+    let mut all_equal = true;
+
     for i in 2..(vector[0].len() - 1) {
         if vector[0][i] < min && vector[0][i] < 0.0 {
             min = vector[0][i];
             index = i;
         }
-        if 
+
+        if min != vector[0][i] {
+            all_equal = false;
+        }
     }
 
     if all_equal {
