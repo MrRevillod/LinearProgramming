@@ -49,7 +49,7 @@ z = 0.12x1 + 0.15x2
 
 // 1.08 => DEBERIA DAR 0.6 según el fakin phpsimplex
 pub static INPUT_V: &str = "
-Simplex -
+Simplex +
 z = 0.12x1 + 0.15x2
 60x1 + 60x2 >= 300
 12x1 + 6x2 >= 36

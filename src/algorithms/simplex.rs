@@ -1,7 +1,7 @@
 
 #![allow(dead_code)]
 
-use crate::types::*;
+use crate::{algorithms::table::print_matrix, types::*};
 
 impl SimplexMethod {
 
@@ -159,20 +159,22 @@ impl SimplexMethod {
         }
     }
 
+    pub fn update_basic_vars(&mut self) {
+        self.table[1][self.pivot.0] = self.table[0][self.pivot.1 + 1].clone()
+    }
+
     // Pivoteo / eliminación gaussiana
     // se utilizan las funciones definidas anteriormente
 
     pub fn pivoting(&mut self) {
 
-        println!("Iniciando pivoteo ...");
+        println!("\nIniciando pivoteo ...");
 
         while !self.should_finish() {
 
             let p_index = self.get_pivot_indexes();
             let mut increased = self.increased.clone();
             let pivot = increased[p_index.0][p_index.1];
-
-            println!("Pivote: {} - Fila {} - Columna {}", &pivot, p_index.0, p_index.1);
 
             // Dividir fila pivote por pivote para hacer pivote = 1
 
@@ -187,7 +189,10 @@ impl SimplexMethod {
             self.pivot = p_index;
             self.increased = increased;
 
-            self.print_increased();
+            self.update_basic_vars();
+
+            let pivot_txt = format!("Pivote: {} - Fila {} - Columna {}", &pivot, p_index.0, p_index.1);
+            print_matrix(&pivot_txt, &self.increased, &self.table);
 
             // std::thread::sleep(std::time::Duration::from_millis(1000))
         }
@@ -196,15 +201,28 @@ impl SimplexMethod {
     pub fn check_valid_solution(&self) {
 
         if self.increased[0][self.increased[0].len()] != 0f64 {
-            println!("El problema no es factible, ya que luego de la primera fase, el valor de la Z es distinto de 0\n");
-            std::process::exit(1);
+            println!("\nEl problema no es factible, ya que luego de la primera fase, el valor de la Z es distinto de 0\n");
+            self.exit();
         }
     }
 
+    pub fn get_shadow_price(&self) {
+
+        println!();
+
+        let target = 0;
+
+        for i in self.n_vars + 2..self.table[0].len() - 1 {
+
+            // if self.increased[0][i - 1] > target
+        }
+
+        println!();
+    }
+
     pub fn normal_simplex(&mut self) {
-        self.print_increased();
         self.pivoting();
-        self.print_increased();
+        self.check_valid_solution();
     }
 
     pub fn solve(&mut self) {
@@ -219,7 +237,7 @@ impl SimplexMethod {
             false => self.normal_simplex()
         }
 
-        println!("{:?}", self.table);
+        self.get_shadow_price();
 
         std::process::exit(1);
     }

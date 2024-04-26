@@ -102,13 +102,19 @@ impl GraphicMethod {
 
     pub fn optimize(&mut self) {
 
-        let optimize = match self.kind {
-            ProblemKind::Minimize => |a: f64, b: f64| a < b,
-            ProblemKind::Maximize => |a: f64, b: f64| a > b,
-        };
-
         // Se recorren los puntos filtrados de intersección
         // a este punto todos estos puntos son parte de la región factible
+
+
+        let mut utility = match self.kind {
+                ProblemKind::Minimize => f64::INFINITY,
+                ProblemKind::Maximize => -f64::INFINITY,
+        };
+
+        let mut point = Point {
+            x: f64::INFINITY,
+            y: f64::INFINITY,
+        };
 
         for Point { x, y } in self.intersections.iter() {
 
@@ -116,17 +122,24 @@ impl GraphicMethod {
             // de la función objetivo y se evalua la optimización
             // y el punto óptimo
 
-            let utility = self.z[0] * x + self.z[1] * y;
+            let mut value = self.z[0] * x + self.z[1] * y;
 
-            if optimize(utility, self.utility) {
-                self.utility = utility;
-                self.optimal_point = [x.clone(), y.clone()];
+            let optime = match self.kind {
+                ProblemKind::Minimize => value <= utility && (point.x > *x || point.y > *y),
+                ProblemKind::Maximize => value >= utility && (point.x > *x || point.y > *y),
+            };
+
+
+            if optime {
+                utility = value;
+                point.x = *x;
+                point.y = *y;
             }
         }
+        self.optimal_point = [point.x, point.y];
     }
     
     // Preparar el problema para graficarlo
-
     pub fn prepare_for_graphic(&mut self) {
 
         // Preparar vector con ecuaciones de la forma [B, c_x, c_y]
@@ -138,37 +151,27 @@ impl GraphicMethod {
             )
         }
         
-        let mut points = Vec::new();
         let mut intersections = self.intersections.clone();
 
-        // Formula de la distancia entre 2 puntos, mediante este metodo
-        // podemos ordenar un vector de puntos x, y siguiendo un orden lógico
-        // mediante su distancia y así crear un poligono
-
-        let dist = |uno: &Point, dos: &Point| {
-            ((dos.x - uno.x).powf(2f64) + (dos.y - uno.y).powf(2f64)).sqrt()
-        };
-
-        // Obtener un punto de partica inicial y añadirlo a un nuevo vector ordenado
-
-        let mut current_point = intersections.remove(0);
-        points.push(vec![current_point.x.clone(), current_point.y.clone()]);
-
-        // Ordenar los puntos mientras no se vacie el vector de intersecciones
-
-        while !intersections.is_empty() {
-
-            // Aplicar función sort by para ordenar 2 elementos mediante una comparación numerica
-
-            intersections.sort_by(
-                |a, b| dist(&current_point, a).partial_cmp(&dist(&current_point, b)).unwrap()
-            );
-
-            current_point = intersections.remove(0);
-            points.push(vec![current_point.x.clone(), current_point.y.clone()]);
+        // Se calcula el centro del poligono
+        let mut center = vec![0.0, 0.0];
+        for i in 0..intersections.len() {
+            center[0] += intersections[i].x;
+            center[1] += intersections[i].y;
         }
 
-        self.python_intersections = points;
+        center[0] /= intersections.len() as f64;
+        center[1] /= intersections.len() as f64;
+
+        // se mide el angulo desde el centro de poligono y todos lo puntos
+        // para ordenar de forma horaria
+        intersections.sort_by(|a, b| {
+            let angle_a = ((a.y - center[1]).atan2(a.x - center[0]) + 2.0 * std::f64::consts::PI) % (2.0 * std::f64::consts::PI);
+            let angle_b = ((b.y - center[1]).atan2(b.x - center[0]) + 2.0 * std::f64::consts::PI) % (2.0 * std::f64::consts::PI);
+            angle_a.partial_cmp(&angle_b).unwrap()
+        });
+
+        self.python_intersections = intersections.iter().map(|p| vec![p.x, p.y]).collect::<Vec<Vec<f64>>>();
 
         // Despreciar restricciones de no negatividad para no graficarlas
 
@@ -187,6 +190,7 @@ impl GraphicMethod {
 
         // python! {
         // 
+        //     import sys
         //     // matplotlib.pyplot -> Graficos
         //     import matplotlib.pyplot as plt
         //     // matplotlib.patches -> Rellenar el área factible con Polygon
@@ -253,13 +257,22 @@ impl GraphicMethod {
         //         ax.plot(x, y, marker="o", markersize=6, color="green", alpha=0.7)
         // 
         //     // El termino inpendiente para poder graficar la función Z sobre el punto óptimo
-        //     z_independent_term = optimal_point[1] - (-(z[0]/z[1]) * optimal_point[0])
+        //     z_recorrido = []
+        //     if z[1] == 0:
+        //         z_independent_term = float("inf")
+        //
+        //         operations["z(x)"] = lambda x: -(z_independent_term) * x + z_independent_term
+        //
+        //         z_recorrido = [operations["z(x)"] (x) for x in domain]
+        //     else:
+        //         z_independent_term = optimal_point[1] - (-(z[0]/z[1]) * optimal_point[0])
         // 
-        //     // Agregar la función Z ya sobre el punto optimo
-        //     operations["z(x)"] = lambda x: -(z[0]/z[1]) * x + z_independent_term
-        // 
-        //     // Evaluación de la Z para poder graficarla
-        //     z_recorrido = [operations["z(x)"](x) for x in domain]
+        //         // Agregar la función Z ya sobre el punto optimo
+        //         operations["z(x)"] = lambda x: -(z[0]/z[1]) * x + z_independent_term
+        //     
+        //         // Evaluación de la Z para poder graficarla
+        //         z_recorrido = [operations["z(x)"] (x) for x in domain]
+        //
         //     
         //     // Graficar Z
         //     ax.plot(domain, z_recorrido, color="purple", alpha=0.4)

@@ -1,9 +1,8 @@
 
 #![allow(dead_code)]
 
-use conditional::conditional;
-
 use crate::types::*;
+use conditional::conditional;
 
 impl SimplexMethod {
 
@@ -21,8 +20,6 @@ impl SimplexMethod {
 
         self.table.push(header);
         self.table.push(sidebar);
-
-        println!("{:?}", self.table);
     }
 
     pub fn add_variable(&mut self, c: char, count: &mut usize, a: &mut A, iter: &usize) {
@@ -52,6 +49,10 @@ impl SimplexMethod {
         self.table[0].pop();
         self.table[0].push(format!("{}{}", c, count));
         self.table[0].push(String::from("LD"));
+
+        if c != 'e' {
+            self.table[1].push(format!("{}{}", c, count))
+        }
 
         *count += 1;
     }
@@ -108,26 +109,28 @@ impl SimplexMethod {
             self.increased[i].push(self.b[i].clone()) // to the increased form matrix
         }
 
-        println!("\nForma aumentada inicial ...");
-
-        self.print_increased();
+        print_matrix("\nForma aumentada inicial ...", &self.increased, &self.table)
     }
-
-    pub fn print_increased(&self) {
-        
-        println!();
-
-        for row in self.increased.iter() {
-
-            for item in row {
-                print!("{:<10}", format!("{:.4}", item));
-            }
-
-            println!();
-        }
-        
-        println!();
-    }
-
 }
 
+pub fn print_matrix(text: &str, matrix: &Vec<Vec<f64>>, table: &Vec<Vec<String>>) {
+    
+    println!("\n{}\n", text);
+
+    for value in table[0].iter() {
+        print!("{:<8}", value);
+    }
+    
+    println!();
+
+    for i in 0..matrix.len() {
+
+        print!("{:<8}", table[1][i]);
+
+        for j in 0..matrix[0].len() {
+            print!("{:<8}", format!("{:.2}", matrix[i][j]));
+        }
+
+        println!();
+    }
+}
