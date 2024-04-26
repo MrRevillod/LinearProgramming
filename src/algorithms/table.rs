@@ -7,55 +7,27 @@ use crate::types::*;
 
 impl SimplexMethod {
 
-    pub fn init_increased_table(&mut self) {
+    pub fn make_initial_table(&mut self) {
 
         let mut header = vec![String::from("VB"), String::from("Z")];
 
-        for i in 0..self.n_vars {
-            header.push(format!("x{}", i + 1));
+        for i in 1..self.n_vars + 1 {
+            header.push(format!("x{}", i))
         }
+
+        header.push(String::from("LD"));
+
+        let sidebar = vec![String::from("Z")];
 
         self.table.push(header);
+        self.table.push(sidebar);
 
-        for _i in 0..self.a.len() + 1 {
-            self.table.push(vec![])
-        }
-
-        self.table[0].push(String::from("LD"));
-        self.table[1].push(String::from("Z"));
-    }
-
-    pub fn init_sec_fase_table(&mut self) {
-
-        let mut table = vec![
-            vec![String::from("VB"), String::from("Z")],
-            vec![String::from("Z")],
-        ];
-
-        for i in 0..self.n_vars {
-            table[0].push(format!("x{}", i + 1));
-        }
-
-        for i in 1..self.var_positions.get(&'e').unwrap().len() + 1 {
-            table[0].push(format!("e{}", i));
-        }
-        
-        for i in 1..self.var_positions.get(&'h').unwrap().len() + 1 {
-            table[0].push(format!("h{}", i));
-        }
-
-        for i in 2..self.table.len() {
-            table.push(vec![self.table[i][0].clone()])
-        }
-
-        table[0].push(String::from("LD"));
-
-        self.table = table;
+        println!("{:?}", self.table);
     }
 
     pub fn add_variable(&mut self, c: char, count: &mut usize, a: &mut A, iter: &usize) {
 
-        // Update table variables
+        // Update increased form variables
         // values = ( a var value, z var value )
 
         let values: (f64, f64) = match &c { 
@@ -65,47 +37,26 @@ impl SimplexMethod {
             _   => panic!("Invalid var type")
         };
 
-        let var_name = format!("{}{}", &c, &count);
-
-        self.table[0].pop();
-        self.table[0].push(var_name.clone());
-
-        self.var_positions.get_mut(&c).unwrap().push(self.table[0].len() - 2);
-
-        self.table[0].push(String::from("LD"));
-
-        // add the basic variable to the first column
-
-        if c == 'a' || c == 'h' {
-            
-            for (i, row) in self.table.iter_mut().enumerate() {
-
-                if row.is_empty() {
-
-                    if c == 'a' {
-                        self.artificial_rows.push(i - 1);
-                    }
-
-                    row.push(var_name.clone());
-                    break
-                }
-            }
-        }
-
-        *count += 1;
-
-        // Update matrix variables
-
         for j in 0..a.len() {
             a[j].push(conditional!(*iter == j ? values.0: 0f64));
         }
+        
+        if c == 'a' {
+            self.artificials_variables.push((*iter + 1, a[0].len())) 
+        }
 
         self.c.push(values.1);
+
+        // Add variable to the table (header && sidebar)
+
+        self.table[0].pop();
+        self.table[0].push(format!("{}{}", c, count));
+        self.table[0].push(String::from("LD"));
+
+        *count += 1;
     }
     
     pub fn to_increased_form(&mut self) {
-
-        self.init_increased_table();
 
         let mut temp_a = self.a.clone();
         let (mut a_count, mut e_count, mut h_count) = (1, 1, 1);
@@ -139,17 +90,16 @@ impl SimplexMethod {
 
         self.increased.insert(0, self.c.clone()); // push the z row (c) into increased
 
-        if self.two_fases {
-            
-            for i in 1..self.n_vars + 1 {
-                self.increased[0][i] = 0f64
-            }
+        match self.kind {
 
-        } else {
-            
-            for i in 1..self.n_vars + 1 {
-                self.increased[0][i] *= -1f64
-            }
+            ProblemKind::Maximize => {
+
+                for i in 1..self.n_vars + 1 {
+                    self.increased[0][i] *= -1f64
+                }
+            },
+
+            ProblemKind::Minimize => {}
         }
 
         self.b.insert(0, 0f64);
@@ -158,46 +108,9 @@ impl SimplexMethod {
             self.increased[i].push(self.b[i].clone()) // to the increased form matrix
         }
 
-        println!("\nForma aumentada inicial...");
-        
-        self.update_table();
-        self.print_table();
-    }
+        println!("\nForma aumentada inicial ...");
 
-    pub fn update_table(&mut self) {
-
-        if self.pivot != (0, 0) {
-            self.table[self.pivot.0 + 1][0] = self.table[0][self.pivot.1 + 1].clone();
-        }
-
-        for i in 1..self.increased.len() + 1 {
-
-            for j in 1..self.increased[0].len() + 1{
-
-                if self.table[i].len() < self.increased[0].len() {
-                    self.table[i].resize(self.increased[0].len() + 1, String::new());
-                }
-
-                self.table[i][j] = self.increased[i - 1][j - 1].to_string();
-            }
-        }
-    }
-
-    pub fn print_table(&self) {
-        
-        println!();
-
-        for row in self.table.iter() {
-
-            for item in row {
-                print!("|");
-                print!("{:<8}", format!("{:.6}", item));
-            }
-
-            println!();
-        }
-
-        println!();
+        self.print_increased();
     }
 
     pub fn print_increased(&self) {
@@ -207,12 +120,12 @@ impl SimplexMethod {
         for row in self.increased.iter() {
 
             for item in row {
-                print!("{:<8}", format!("{:.2}", item));
+                print!("{:<10}", format!("{:.4}", item));
             }
 
             println!();
         }
-
+        
         println!();
     }
 

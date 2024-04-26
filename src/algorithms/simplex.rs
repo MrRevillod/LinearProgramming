@@ -2,83 +2,52 @@
 #![allow(dead_code)]
 
 use crate::types::*;
-use std::collections::HashMap;
 
 impl SimplexMethod {
-    
+
     pub fn new(data: (ProblemKind, A, B, C, Operations)) -> Self {
 
-        let n_vars = &data.1[0].len();
-
-        let vars = vec!['a', 'e', 'h'];
-        let mut var_positions: HashMap<char, Vec<usize>> = HashMap::new();
-
-        for i in 0..vars.len() {
-            var_positions.insert(vars[i], vec![]);
-        }
-
         SimplexMethod {
+            n_vars: data.1[0].len(),
             kind: data.0,
-            should_terminate: false,
             a: data.1, // coeffs
             b: data.2, // results
             c: data.3, // z row
             operations: data.4,
             increased: Vec::new(),
-            table: Vec::new(),
             pivot: (0, 0),
             two_fases: false,
-            n_vars: *n_vars,
-            var_positions,
-            artificial_rows: Vec::new(),
-            pivot_row_history: Vec::new(),
+            basic_vars: Vec::new(),
+            basic_vars_history: Vec::new(),
+            artificials_variables: Vec::new(),
+            table: Vec::new(),
         }
     }
 
     // Obtener indices del pivot actual 
     // retorna una tupa con las coordenadas (i, j)
 
-    fn get_pivot_indexes(&self) -> (usize, usize) {
-        
-        let mut div_vec = vec![];
-        
-        // Dependiendo del tipo de problema debemos seleccionar
-        // la columna pivote de una forma u otra
+    fn get_pivot_indexes(&mut self) -> (usize, usize) {
 
-        // Maximización => Menor negativo
-        // Minimización => Mayor positivo
+        let pivot_column = self.get_pivot_column();
+        let pivot_row = self.get_pivot_row(pivot_column.clone());
 
-        let c_index = self.pivot_column();
+        self.basic_vars.push((pivot_row, pivot_column));
+        self.basic_vars_history.push((pivot_row, pivot_column));
 
-        // Obtener vector auxiliar con los resultados
-        // de la división entre col pivote y col de resultados
-
-        // El menor valor de este vector seleccionará el indice de la fila pivote
-
-        for i in 1..self.increased.len() {
-            
-            let col = self.increased[i][c_index];
-            let res = self.increased[i][self.increased[0].len() - 1];
-
-            div_vec.push(res / col);
-        }
-
-        let r_index = self.max_row_pivot(div_vec);
-
-        (r_index, c_index)
+        (pivot_row, pivot_column)
     }
 
-    fn pivot_column(&self) -> usize {
-        
-        let mut index = 0;
-        let mut value = 0f64;
+    fn get_pivot_column(&self) -> usize { // REVISADA
 
-        let select = |x: f64, y: f64| x < y && x < 0f64;
+        let mut index = 1;
+        let mut min = 0_f64;
 
         for i in 1..self.increased[0].len() - 1 {
-            
-            if select(self.increased[0][i], value) {
-                value = self.increased[0][i];
+
+            if self.increased[0][i] < min && self.increased[0][i] < 0_f64 {
+                
+                min = self.increased[0][i];
                 index = i;
             }
         }
@@ -89,35 +58,73 @@ impl SimplexMethod {
     // Obtener indice de la fila pivote mediante el vector de division.
     // El valor seleccionado corresponde al menor >= 0 del vector.
 
-    fn max_row_pivot(&self, div_vec: Vec<f64>) -> usize {
-        
+    fn get_min_div(&self, div_vec: Vec<f64>) -> usize {
+
         let mut index = 0;
         let mut target = f64::INFINITY;
 
-        let mut all_invalid = true;
-
         for (i, &value) in div_vec.iter().enumerate() {
-            
-            if value >= 0f64 && value < target && i + 1 != self.pivot.0 {
-                all_invalid = false;
+
+            if value >= 0_f64 && value < target {
                 index = i;
                 target = value;
             }
         }
 
-        // Si no se encuentra un valor positivo mayor a 0
-        // o sea, son todo negativos o infinitos (x/0) el 
-        // algoritmo debe terminar
-
-        if all_invalid {
-            self.get_shadow_prices();
-            std::process::exit(0);
-        }
-        
         // Se retorna el indice + 1 ya que el conteo de filas se salta
         // la fila de la función objetivo (fila 0)
 
         index + 1
+    }
+
+    fn get_pivot_row(&self, pivot_col: usize) -> usize {
+
+        let mut div_vec = vec![];
+
+        for i in 1..self.increased.len() {
+
+            let col = self.increased[i][pivot_col];
+            let res = self.increased[i][self.increased[0].len() - 1];
+
+            div_vec.push(res / col);
+        }
+
+        let mut index = self.get_min_div(div_vec.clone());
+
+        let mut is_basic_variable = false;
+
+        for vb in self.basic_vars.iter() {
+
+            if index == vb.0 {
+                is_basic_variable = true;
+                break;
+            }
+        }
+
+        let mut max_iterations = 0;
+
+        while is_basic_variable && max_iterations < self.a.len() {
+
+            div_vec[index - 1] = -1.0;
+
+            index = self.get_min_div(div_vec.clone());
+
+            for vb in self.basic_vars.iter() {
+
+                if index == vb.0 {
+                    is_basic_variable = true;
+                    break;
+                }
+
+                is_basic_variable = false;
+            }
+
+            max_iterations += 1;
+        }
+
+        if index == 0 { self.exit() }
+
+        index
     }
 
     // Caso base de finalización
@@ -127,16 +134,37 @@ impl SimplexMethod {
     fn should_finish(&mut self) -> bool {
 
         for i in 1..self.increased[0].len() - 1 {
-            if self.increased[0][i] < 0f64 { return false }
+            if self.increased[0][i] < 0_f64 { return false }
         }
 
         true
+    }
+
+    pub fn eliminacion_gauss(&self, increased: &mut Vec<Vec<f64>>, pivot: &(usize, usize)) {
+
+        for i in 0..increased.len() {
+
+            if i == pivot.0 { continue }
+
+            for j in 0..increased[i].len() {
+
+                increased[i][j] = self.increased[i][j] - 
+                    (increased[pivot.0][j] * self.increased[i][pivot.1])
+                ;
+
+                if increased[i][j].abs() <= f64::EPSILON {
+                    increased[i][j] = 0_f64;
+                }
+            }
+        }
     }
 
     // Pivoteo / eliminación gaussiana
     // se utilizan las funciones definidas anteriormente
 
     pub fn pivoting(&mut self) {
+
+        println!("Iniciando pivoteo ...");
 
         while !self.should_finish() {
 
@@ -152,31 +180,16 @@ impl SimplexMethod {
                 *value /= pivot;
             }
 
-            // Se itera sobre la matriz clonada y se aplica el pivoteo gaussiano
-
-            for i in 0..increased.len() {
-                
-                if i == p_index.0 { continue }
-
-                for j in 0..increased[i].len() {
-
-                    increased[i][j] = self.increased[i][j] - 
-                        (increased[p_index.0][j] * self.increased[i][p_index.1])
-                    ;
-
-                    if increased[i][j].abs() <= f64::EPSILON {
-                        increased[i][j] = 0f64;
-                    }
-                }
-            }
+            self.eliminacion_gauss(&mut increased, &p_index);
 
             // Actualizar parametros de la instacia y mostrar la tabla.
-            
+
             self.pivot = p_index;
             self.increased = increased;
 
-            self.update_table();
-            self.print_table();
+            self.print_increased();
+
+            // std::thread::sleep(std::time::Duration::from_millis(1000))
         }
     }
 
@@ -188,39 +201,16 @@ impl SimplexMethod {
         }
     }
 
-    pub fn get_shadow_prices(&self) {
-
-        let h_indexes = self.var_positions.get(&'h').unwrap();
-
-        println!("Precios sombra:\n");
-
-        let mut h_count = 1;
-        let mut h_values = vec![0f64, 0f64];
-
-        for (i, num) in self.increased[0].iter().enumerate() {
-
-            if h_indexes.contains(&i) {
-
-                print!("h{} = {:.2}  ", h_count, num);
-
-                if *num > h_values[0] {
-                    h_values[0] = num.clone();
-                    h_values[1] = h_count as f64;
-                }
-                
-                h_count += 1;
-            }
-        }
-
-        println!("\n\nDonde el precio sombra más rentable corresponde a la holgura h{}\n", h_values[1]);
-    }
-
     pub fn normal_simplex(&mut self) {
-        self.pivoting()
+        self.print_increased();
+        self.pivoting();
+        self.print_increased();
     }
 
     pub fn solve(&mut self) {
         
+        self.make_initial_table();
+
         self.to_increased_form();
 
         match self.two_fases {
@@ -229,8 +219,13 @@ impl SimplexMethod {
             false => self.normal_simplex()
         }
 
-        self.get_shadow_prices();
+        println!("{:?}", self.table);
 
+        std::process::exit(1);
+    }
+
+    pub fn exit(&self) {
+        println!("El programa ha finalizado");
         std::process::exit(1);
     }
 }

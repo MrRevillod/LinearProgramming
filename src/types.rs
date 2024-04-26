@@ -1,6 +1,4 @@
 
-use std::collections::HashMap;
-
 #[allow(dead_code)]
 
 pub type A = Vec<Vec<f64>>;
@@ -60,18 +58,17 @@ pub struct GraphicMethod {
 #[allow(warnings)]
 #[derive(Debug, Clone)]
 pub struct SimplexMethod {
-    pub kind: ProblemKind,
-    pub should_terminate: bool,
     pub a: A,
     pub b: B,
     pub c: C,
+    pub kind: ProblemKind,
     pub operations: Operations,
     pub increased: Vec<Vec<f64>>,
-    pub table: Vec<Vec<String>>,
     pub pivot: (usize, usize),
     pub two_fases: bool,
     pub n_vars: usize,
-    pub var_positions: HashMap<char, Vec<usize>>,
-    pub artificial_rows: Vec<usize>,
-    pub pivot_row_history: Vec<usize>,
+    pub basic_vars: Vec<(usize, usize)>,
+    pub basic_vars_history: Vec<(usize, usize)>,
+    pub artificials_variables: Vec<(usize, usize)>,
+    pub table: Vec<Vec<String>>,
 }

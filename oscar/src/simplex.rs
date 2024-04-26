@@ -5,8 +5,11 @@ use crate::lexer::TokenType;
 fn should_finish(z_array: Vec<f64>) -> bool {
     let mut i = 1;
     while i < (z_array.len() - 1) {
-        // if z_array[i].powf(11.0).trunc() < 0.0 { // descomentar para numeros de coma flotante
-        if z_array[i] < 0.0 {
+        if z_array[i].powf(11.0).trunc() < 0.0 { // descomentar para numeros de coma flotante
+        
+        // if z_array[i].abs() <= f64::EPSILON {
+
+        // if z_array[i] < 0.0 {
             return false;
         }
         i += 1;
@@ -23,7 +26,7 @@ fn get_x_pivot(vector: Vec<Vec<f64>>) -> usize {
 
     let mut all_equal = true;
 
-    for i in 2..(vector[0].len() - 1) {
+    for i in 2..vector[0].len() - 1 {
         if vector[0][i] < min && vector[0][i] < 0.0 {
             min = vector[0][i];
             index = i;
@@ -105,8 +108,6 @@ fn get_y_pivot(matrix: Vec<Vec<f64>>, x_pivot: usize) -> usize {
 
 fn get_y_pivot_two_fases(problem: &mut Problem, matrix: Vec<Vec<f64>>, x_pivot: usize) -> usize {
 
-    dbg!(problem.clone());
-
     let mut div_vector = Vec::new();
 
     let n_size = matrix[0].len();
@@ -186,6 +187,7 @@ fn pivoting(matrix1: Vec<Vec<f64>>, matrix2: &mut Vec<Vec<f64>>, x_pivot: usize,
 
 
 fn initial_matrix(problem: Problem) -> Vec<Vec<f64>> {
+
     let n_vars = problem.func.vars.len();
     let m_size = problem.constrains.len() - 1;
     let mut n_size = 0;
@@ -195,7 +197,7 @@ fn initial_matrix(problem: Problem) -> Vec<Vec<f64>> {
         n_size += 1;
     }
 
-    n_size += n_vars + 2;
+    n_size += n_vars + 2; // Sum + z column + result colum
     let n_size = n_size;
     let mut matrix = Vec::<Vec<f64>>::with_capacity(m_size);
 
@@ -208,13 +210,10 @@ fn initial_matrix(problem: Problem) -> Vec<Vec<f64>> {
 
     for i in 0..n_vars {
         (matrix[0][i + 1], matrix[0][0]) = match problem.obj {
-            TokenType::Max =>  (-problem.func.vars[
-                format!("x{}", (i + 1)).as_str()
-            ], 1.0),
+            TokenType::Max => 
+            (-problem.func.vars[format!("x{}", (i + 1)).as_str()], 1.0),
 
-            _ =>  (problem.func.vars[
-                format!("x{}", (i + 1)).as_str()
-            ], -1.0),
+            _ =>  (problem.func.vars[format!("x{}", (i + 1)).as_str()], -1.0),
         }
     }
 
@@ -244,6 +243,8 @@ fn initial_matrix(problem: Problem) -> Vec<Vec<f64>> {
         index_constrain += 1;
         i += 1;
     }
+
+
 
     matrix
 }
@@ -336,6 +337,23 @@ fn initial_matrix_first_fase(problem: &mut Problem) -> Vec<Vec<f64>> {
         }
     }
 
+    println!();
+    println!("PRINT DE LA MATRIX");
+    println!();
+
+    for row in matrix.iter() {
+
+        for item in row {
+            print!("{:<8}", format!("{:.2}", item));
+        }
+
+        println!();
+    }
+
+    println!();
+    println!("PRINT DE LA MATRIX");
+    println!();
+
     matrix
 }
 
@@ -343,15 +361,29 @@ fn first_fase(problem: &mut Problem) -> Vec<Vec<f64>> {
     println!("Primera fase:");
     let mut matrix = initial_matrix_first_fase(problem);
 
+    println!();
+    println!("PRINT DE LA MATRIX DENTRO DE FIRST FASE ");
+    println!();
+
+    for row in matrix.iter() {
+
+        for item in row {
+            print!("{:<8}", format!("{:.2}", item));
+        }
+
+        println!();
+    }
+
+    println!();
+    println!("PRINT DE LA MATRIX DENTRO DE FIRST FASE ");
+    println!();
+
+
     let mut c_matrix = 0;
     let mut l_matrix = 1;
     let mut matrix1 = matrix.clone();
 
     let mut s_matrix = vec![&mut matrix, &mut matrix1];
-
-    for x in s_matrix[c_matrix].clone() {
-        println!("{:?}", x);
-    }
 
     while !should_finish(s_matrix[c_matrix][0].clone()) {
 
@@ -365,10 +397,10 @@ fn first_fase(problem: &mut Problem) -> Vec<Vec<f64>> {
         c_matrix = l_matrix;
         l_matrix = swap;
 
-        println!("");
-        for x in s_matrix[c_matrix].clone() {
-            println!("{:?}", x);
-        }
+        // println!("");
+        // for x in s_matrix[c_matrix].clone() {
+        //     println!("{:?}", x);
+        // }
     }
 
     let n_size = s_matrix[c_matrix][0].len();
@@ -377,6 +409,23 @@ fn first_fase(problem: &mut Problem) -> Vec<Vec<f64>> {
         println!("{}: El problema no tiene solución", s_matrix[c_matrix][0][n_size -1]);
         std::process::exit(1);
     }
+
+    println!();
+    println!("Ultimo print de la primera fase");
+    println!();
+
+    for row in  s_matrix[c_matrix].to_vec() {
+
+        for item in row {
+            print!("{:<8}", format!("{:.2}", item));
+        }
+
+        println!();
+    }
+
+    println!();
+    println!("Ultimo print de la primera fase");
+    println!();
 
     s_matrix[c_matrix].to_vec()
 }
@@ -393,17 +442,34 @@ fn initial_matrix_second_fase(problem: Problem, matrix: &mut Vec<Vec<f64>>) -> V
     matrix[0][0] = 1.0;
     for i in 0..n_vars {
         matrix[0][i + 1] = match problem.obj {
-            TokenType::Max =>  -problem.func.vars[
-                format!("x{}", (i + 1)).as_str()
-            ],
+            TokenType::Max =>  -problem.func.vars[format!("x{}", (i + 1)).as_str()],
 
-            _ =>  problem.func.vars[
-                format!("x{}", (i + 1)).as_str()
-            ],
+            _ =>  problem.func.vars[format!("x{}", (i + 1)).as_str()],
         }
     }
+    
+    println!();
+    println!("PRINT DE LA MATRIX PREPRARACIÓN 2DA FASE ANTES WEA RARA");
+    println!();
+
+    for row in matrix.iter() {
+
+        for item in row {
+            print!("{:<8}", format!("{:.2}", item));
+        }
+
+        println!();
+    }
+
+    println!();
+    println!("PRINT DE LA MATRIX PREPRARACIÓN 2DA FASE ANTES WEA RARA");
+    println!();
+
 
     let mut index = 0;
+        
+    println!("{:?}", problem.coefs_indexes);
+
     for i in 0..problem.coefs_indexes.len() {
         if problem.coefs_indexes[i] != 0 {
             let pivot = matrix[0][problem.coefs_indexes[i]];
@@ -414,10 +480,23 @@ fn initial_matrix_second_fase(problem: Problem, matrix: &mut Vec<Vec<f64>>) -> V
         }
     }
 
-    for x in matrix.clone() {
-        println!("{:?}", x);
+    println!();
+    println!("PRINT DE LA MATRIX PREPRARACIÓN 2DA DESPUES DE WEA RARA");
+    println!();
+
+    for row in matrix.iter() {
+
+        for item in row {
+            print!("{:<8}", format!("{:.2}", item));
+        }
+
+        println!();
     }
-    println!("");
+
+    println!();
+    println!("PRINT DE LA MATRIX PREPRARACIÓN 2DA DESPUES DE WEA RARA");
+    println!();
+
     matrix.to_vec()
 }
 
@@ -447,10 +526,10 @@ fn second_fase(mut problem: Problem, matrix: &mut Vec<Vec<f64>>) {
         c_matrix = l_matrix;
         l_matrix = swap;
 
-        println!("");
-        for x in s_matrix[c_matrix].clone() {
-            println!("{:?}", x);
-        }
+        // println!("");
+        // for x in s_matrix[c_matrix].clone() {
+        //     println!("{:?}", x);
+        // }
     }
 
 }
@@ -459,14 +538,14 @@ pub fn simplex(problem: &mut Problem) {
     let mut are_a_vars = false;
 
     for constrain in problem.constrains.iter() {
-        if (constrain.sig == TokenType::Gequal ||
-            constrain.sig == TokenType::Equal  ||
-            constrain.sig == TokenType::Gthan) && constrain.y != 0.0 {
+
+        if (constrain.sig == TokenType::Gequal) && constrain.y != 0.0 {
             are_a_vars = true;
         }
     }
 
     if are_a_vars {
+
         println!("Método simplex en 2 fases:");
 
         let mut matrix_first_fase = first_fase(problem);
@@ -475,6 +554,7 @@ pub fn simplex(problem: &mut Problem) {
 
 
     } else {
+
         println!("Método simplex:");
         let mut matrix = initial_matrix(problem.clone());
 
@@ -495,8 +575,8 @@ pub fn simplex(problem: &mut Problem) {
             l_matrix = swap;
 
         }
-        for x in s_matrix[c_matrix].clone() {
-            println!("{:?}", x);
-        }
+        // for x in s_matrix[c_matrix].clone() {
+        //     println!("{:?}", x);
+        // }
     }
 }

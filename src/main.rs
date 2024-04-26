@@ -12,11 +12,9 @@ use parser::parse_problem;
 
 fn main() {
 
-    let algo = parse_problem(prueba);
+    let algorithm = parse_problem(INPUT_V);
 
-    dbg!(algo.clone());
-
-    match algo {
+    match algorithm {
         Algorithm::Graphic(mut graphic) => graphic.solve(),
         Algorithm::Simplex(mut simplex) => simplex.solve(),
     }

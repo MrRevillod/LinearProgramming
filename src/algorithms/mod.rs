@@ -1,5 +1,5 @@
 
 pub mod graphic;
-pub mod simplex;
 pub mod table;
+pub mod simplex;
 pub mod two_fases;
